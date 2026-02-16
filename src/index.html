@@ -1,0 +1,1410 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+  
+  <style>
+    body { background-color: #f8f9fa; font-family: "Segoe UI", "Microsoft JhengHei", sans-serif; }
+    [v-cloak] { display: none; }
+
+    /* Layout */
+    .sidebar { min-height: 100vh; background: #212529; color: white; display: flex; flex-direction: column; }
+    .nav-link { color: rgba(255,255,255,.75); cursor: pointer; transition: 0.2s; border-radius: 5px; margin-bottom: 5px;}
+    .nav-link:hover { color: #fff; background: rgba(255,255,255,.1); }
+    .nav-link.active { color: #fff; background: #0d6efd; font-weight: bold; }
+
+    /* Admin & Dashboard Styles */
+    .console-box { background: white; border-radius: 12px; padding: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 30px; }
+    .type-selector .btn { border-radius: 0; flex: 1; padding: 12px; font-weight: 600; }
+    .type-selector .btn:first-child { border-top-left-radius: 8px; border-bottom-left-radius: 8px; }
+    .type-selector .btn:last-child { border-top-right-radius: 8px; border-bottom-right-radius: 8px; }
+    .period-selector .btn { border-radius: 20px; padding: 8px 20px; margin-right: 8px; margin-bottom: 8px; border: 1px solid #dee2e6; color: #6c757d; }
+    .period-selector .btn:hover { background: #f8f9fa; }
+    .period-selector .btn.active { background: #0d6efd; color: white; border-color: #0d6efd; box-shadow: 0 2px 5px rgba(13,110,253,0.3); }
+    .analyze-btn { width: 100%; border-radius: 8px; padding: 12px; font-weight: bold; font-size: 1.1rem; transition: 0.2s; }
+    .analyze-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(13,110,253,0.2); }
+    
+    .dash-box { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); height: 100%; min-height: 350px; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; }
+    .info-card { text-align: center; }
+    .info-title { font-size: 1.4rem; font-weight: 700; color: #495057; border-bottom: 3px solid #0d6efd; display: inline-block; padding-bottom: 5px; margin-bottom: 25px;}
+    .info-number { font-size: 6rem; font-weight: 800; color: #dc3545; line-height: 1; margin-bottom: 15px; }
+    .info-period { font-size: 1rem; color: #6c757d; background: #e9ecef; padding: 5px 15px; border-radius: 20px; }
+    .dash-box img { max-width: 100%; max-height: 320px; border-radius: 8px; }
+    .dash-label { font-size: 0.9rem; color: #adb5bd; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; width: 100%; text-align: left;}
+    
+    .admin-card { border: 1px solid #eee; border-radius: 8px; }
+    .admin-btn { width: 100%; text-align: left; margin-bottom: 5px; font-size: 0.9rem; }
+    .loading-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(255,255,255,0.9); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+    
+    .status-badge { font-size: 0.8em; padding: 0.4em 0.7em; }
+    .sortable { cursor: pointer; user-select: none; }
+    .filter-btn-group .btn.active { background-color: #6c757d; color: white; border-color: #6c757d; }
+
+    /* KPI & Visuals */
+    .kpi-compact { border-radius: 8px; padding: 12px 5px; text-align: center; color: white; box-shadow: 0 3px 6px rgba(0,0,0,0.15); height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: transform 0.2s; }
+    .kpi-compact:active { transform: scale(0.98); }
+    .kpi-compact .kpi-num { font-size: clamp(1.8rem, 4vw, 3rem); font-weight: 800; line-height: 1; margin-bottom: 4px; text-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .kpi-compact .kpi-text { font-size: clamp(0.7rem, 2vw, 0.9rem); font-weight: 700; opacity: 0.9; letter-spacing: 0.5px; }
+    .bg-kpi-blue { background: linear-gradient(180deg, #0d6efd, #0b5ed7); }
+    .bg-kpi-green { background: linear-gradient(180deg, #198754, #157347); }
+    .bg-kpi-red { background: linear-gradient(180deg, #dc3545, #bb2d3b); }
+
+    .timeline-wrapper { position: relative; padding-left: 10px; margin-top: 10px; }
+    .timeline-wrapper::before { content: ''; position: absolute; top: 15px; bottom: 0; left: 21px; width: 2px; background: #e9ecef; z-index: 0; }
+    .timeline-card-accent { background: white; border-radius: 8px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); position: relative; z-index: 1; border: 1px solid #f1f3f5; border-left-width: 5px; }
+    .timeline-dot-hollow { position: absolute; left: -29px; top: 18px; width: 14px; height: 14px; border-radius: 50%; background: white; border: 3px solid #ccc; z-index: 2; }
+    .border-purple { border-left-color: #a855f7 !important; } .dot-purple { border-color: #a855f7 !important; }
+    .border-green { border-left-color: #198754 !important; } .dot-green { border-color: #198754 !important; }
+    .border-blue { border-left-color: #0d6efd !important; } .dot-blue { border-color: #0d6efd !important; }
+
+    .pending-container { background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); padding: 15px; height: calc(100vh - 250px); min-height: 500px; overflow-y: auto; }
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #dee2e6; border-radius: 10px; }
+    .pending-card-tint { border-radius: 8px; padding: 15px; margin-bottom: 12px; border: 1px solid transparent; transition: 0.2s; }
+    .pending-card-tint:hover { transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+    
+    /* 色卡 CSS */
+    .bg-tint-purple { background-color: #f3e8ff !important; border-color: #e9d5ff !important; }
+    .bg-tint-green { background-color: #dcfce7 !important; border-color: #bbf7d0 !important; }
+    .bg-tint-blue { background-color: #dbeafe !important; border-color: #bfdbfe !important; }
+    .bg-tint-gray { background-color: #f8f9fa !important; border-color: #e9ecef !important; }
+    
+    .tag-sm { font-size: 0.75rem; padding: 2px 8px; border-radius: 4px; font-weight: 600; opacity: 0.8; }
+    .tag-purple { background: rgba(168, 85, 247, 0.15); color: #7e22ce; }
+    .tag-green { background: rgba(25, 135, 84, 0.15); color: #157347; }
+    .tag-blue { background: rgba(13, 110, 253, 0.15); color: #0a58ca; }
+    .bg-purple { background-color: #a855f7 !important; color: white; } 
+
+    .mobile-tab-nav .btn { border-radius: 20px; font-weight: 600; border: none; background: #e9ecef; color: #6c757d; flex: 1; }
+    .mobile-tab-nav .btn.active { background: #0d6efd; color: white; box-shadow: 0 4px 10px rgba(13,110,253,0.3); }
+    
+    /* 自訂工具列樣式 */
+    .filter-toolbar { background: white; padding: 0.5rem 1rem; border-radius: 50px; box-shadow: 0 2px 5px rgba(0,0,0,0.03); border: 1px solid #dee2e6; }
+    .form-switch .form-check-input { cursor: pointer; width: 2.5em; height: 1.25em; }
+    .form-switch .form-check-input:checked { background-color: #0d6efd; border-color: #0d6efd; }
+   .chart-scroll-container {
+     overflow-x: auto;
+     -webkit-overflow-scrolling: touch;
+     height: 100%;
+   }
+  </style>
+</head>
+<body>
+
+<div id="app" class="container-fluid" v-cloak>
+  
+  <div v-if="loading" class="loading-overlay">
+    <div class="spinner-border text-primary mb-3" style="width: 3rem; height: 3rem;"></div>
+    <h5 class="text-muted">{{ loadingText }}</h5>
+  </div>
+
+  <div class="row">
+    <div class="col-md-3 col-lg-2 sidebar p-3 d-none d-md-flex">
+      <div class="mb-4 d-flex align-items-center">
+        <i class="bi bi-pc-display-horizontal fs-4 me-2 text-info"></i>
+        <span class="h6 m-0 fw-bold">IT 工作日報系統</span>
+      </div>
+
+      <button class="btn btn-success w-100 mb-3 shadow-sm fw-bold" @click="openCreateModal()">
+        <i class="bi bi-plus-circle-fill me-2"></i>新增任務
+      </button>
+
+      <ul class="nav flex-column mb-4">
+        <li class="nav-item">
+            <a class="nav-link" :class="{ active: currentView === 'dashboard' }" @click="loadDashboard()">
+            <i class="bi bi-grid-1x2-fill me-2"></i> 儀表板
+            </a>
+        </li>
+      </ul>
+
+      <small class="text-muted text-uppercase fw-bold mb-2 ps-2">資料來源</small>
+      <ul class="nav flex-column mb-4">
+        <li class="nav-item" v-for="(src, idx) in sources" :key="idx">
+          <a class="nav-link" :class="{ active: currentView === 'list' && currentSourceIdx === idx }" @click="loadSheet(idx)">
+            <i class="bi bi-table me-2"></i> {{ src.name }}
+          </a>
+        </li>
+      </ul>
+
+      <small class="text-muted text-uppercase fw-bold mb-2 ps-2">系統管理</small>
+      <ul class="nav flex-column mb-auto">
+        <li class="nav-item">
+          <a class="nav-link" :class="{ active: currentView === 'admin' }" @click="loadAdminPanel()">
+            <i class="bi bi-speedometer2 me-2"></i> 分析控制台
+          </a>
+        </li>
+      </ul>
+      
+      <div class="mt-4 text-center text-muted small">v8.4 Integrated</div>
+    </div>
+
+    <div class="col-12 d-md-none bg-dark text-white p-3 d-flex justify-content-between align-items-center">
+      <span class="fw-bold">IT 工作日報系統</span>
+      <button class="btn btn-sm btn-outline-light" @click="toggleMobileMenu">
+        <i class="bi bi-list"></i>
+      </button>
+    </div>
+    
+    <div v-if="showMobileMenu" class="col-12 bg-dark text-white p-3 d-md-none border-top border-secondary">
+      <ul class="nav flex-column">
+         <button class="btn btn-success w-100 mb-3" @click="openCreateModal(); showMobileMenu=false">
+            <i class="bi bi-plus-circle-fill me-2"></i>新增任務
+         </button>
+         <li class="nav-item mb-2">
+            <a class="nav-link text-white" @click="loadDashboard(); showMobileMenu=false">
+                <i class="bi bi-grid-1x2-fill me-2"></i> 儀表板
+            </a>
+         </li>
+         <li class="nav-item" v-for="(src, idx) in sources" :key="idx">
+          <a class="nav-link" :class="{ active: currentView === 'list' && currentSourceIdx === idx }" @click="loadSheet(idx); showMobileMenu=false">
+             {{ src.name }}
+          </a>
+        </li>
+        <li class="nav-item border-top border-secondary mt-2 pt-2">
+           <a class="nav-link" @click="loadAdminPanel(); showMobileMenu=false">分析控制台</a>
+        </li>
+      </ul>
+    </div>
+
+    <div class="col-md-9 col-lg-10 p-4 bg-light">
+      
+      <div v-if="currentView === 'dashboard'">
+          <div class="d-flex justify-content-between align-items-center mb-4">
+              <div>
+                <h3 class="fw-bold m-0 text-dark d-inline-block align-middle">
+                    <i class="bi bi-window-sidebar me-2 text-primary"></i>儀表板
+                </h3>
+                <span class="ms-3 badge bg-light text-secondary border rounded-pill align-middle" style="font-weight: 500; font-size: 0.9rem;">
+                    <i class="bi bi-calendar3 me-1"></i>{{ todayDateStr }}
+                </span>
+              </div>
+              <button class="btn btn-light rounded-circle shadow-sm" @click="loadDashboard()">
+                  <i class="bi bi-arrow-clockwise" :class="{'fa-spin': dashboardLoading}"></i>
+              </button>
+          </div>
+
+          <div class="row g-2 mb-4">
+              <div class="col-4"><div class="kpi-compact bg-kpi-blue"><div class="kpi-num">{{ hudData.kpi.todayNew }}</div><div class="kpi-text">今日新增</div></div></div>
+              <div class="col-4"><div class="kpi-compact bg-kpi-green"><div class="kpi-num">{{ hudData.kpi.todayDone }}</div><div class="kpi-text">今日完成</div></div></div>
+              <div class="col-4"><div class="kpi-compact bg-kpi-red"><div class="kpi-num">{{ hudData.kpi.pendingTotal }}</div><div class="kpi-text">待處理</div></div></div>
+          </div>
+
+          <div class="d-flex justify-content-end mb-3">
+            <button class="btn btn-sm btn-outline-secondary" @click="toggleTrendChart">
+              <i class="bi bi-graph-up me-1"></i> 
+              {{ showTrendChart ? '隱藏趨勢圖' : '顯示趨勢圖' }}
+            </button>
+          </div>
+
+          <div v-show="showTrendChart" class="bg-white p-3 rounded-3 shadow-sm mb-4">
+            <!-- RWD Control Trigger -->
+            <div class="d-md-none d-flex justify-content-end mb-3">
+              <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#trendChartFilterModal">
+                <i class="bi bi-funnel-fill me-1"></i> 篩選與設定
+              </button>
+            </div>
+
+            <!-- Desktop Controls -->
+            <div class="d-none d-md-flex flex-wrap justify-content-between align-items-center mb-3 gap-3">
+                <div class="d-flex align-items-center gap-2">
+                   <select class="form-select form-select-sm" v-model="trendChartSource" @change="fetchTrendData" style="width: 150px;">
+                     <option value="_ALL_">全部來源</option>
+                     <option v-for="src in sources" :key="src.id" :value="src.name">{{ src.name }}</option>
+                   </select>
+                   <input type="date" class="form-control form-control-sm" v-model="chartStartDate" @change="fetchTrendData" style="width: 150px;">
+                   <span class="text-muted">~</span>
+                   <input type="date" class="form-control form-control-sm" v-model="chartEndDate" @change="fetchTrendData" style="width: 150px;">
+                   <button class="btn btn-sm btn-primary" @click="fetchTrendData">
+                      <i class="bi bi-search"></i> 查詢
+                    </button>
+                </div>
+                <div class="d-flex flex-wrap gap-2">
+                    <button class="btn btn-sm btn-outline-secondary" @click="setChartDateRange('current_month')">本月</button>
+                    <button class="btn btn-sm btn-outline-secondary" @click="setChartDateRange('last_month')">上月</button>
+                    <button class="btn btn-sm btn-outline-secondary" @click="setChartDateRange('current_quarter')">本季</button>
+                    <button class="btn btn-sm btn-outline-secondary" @click="setChartDateRange('last_quarter')">上季</button>
+                </div>
+            </div>
+            <div style="position: relative; height: 350px;">
+              <div class="chart-scroll-container">
+                <canvas id="trendChart"></canvas>
+              </div>
+              <!-- Loading Overlay -->
+              <div v-if="chartLoading" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.85); display: flex; justify-content: center; align-items: center;">
+                <div class="spinner-border text-primary" role="status">
+                  <span class="visually-hidden">Loading...</span>
+                </div>
+                <span class="ms-3 text-secondary fw-bold">趨勢圖載入中...</span>
+              </div>
+              <!-- Prompt Text -->
+              <div v-if="!isTrendChartInitiated && !chartLoading" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; color: #6c757d; background: #f8f9fa; border-radius: 8px;">
+                <i class="bi bi-graph-up-arrow" style="font-size: 3rem; opacity: 0.5;"></i>
+                <p class="mt-3 fw-bold">請設定日期區間後，點擊「查詢」以載入趨勢圖。</p>
+              </div>
+            </div>
+            <!-- Data Label Toggle (Moved) -->
+            <div class="d-flex justify-content-end mt-2">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" role="switch" id="toggleLabels" v-model="trendChartShowLabels" @change="updateTrendChart()">
+                <label class="form-check-label small" for="toggleLabels">顯示資料標籤</label>
+              </div>
+            </div>
+          </div>
+ 
+           <div class="d-md-none mb-4 mobile-tab-nav d-flex gap-2">
+              <button class="btn shadow-sm" :class="{ active: mobileTab === 'stream' }" @click="mobileTab = 'stream'">
+                  <i class="bi bi-activity me-1"></i> 今日動態
+              </button>
+              <button class="btn shadow-sm" :class="{ active: mobileTab === 'pending' }" @click="mobileTab = 'pending'">
+                  <i class="bi bi-hourglass-split me-1"></i> 待處理 ({{ hudData.pending.length }})
+              </button>
+          </div>
+
+          <div class="row">
+              <div class="col-lg-8" v-show="mobileTab === 'stream' || !isMobile">
+                  <h5 class="text-secondary fw-bold mb-3 ms-2 d-none d-lg-block"><i class="bi bi-activity me-2"></i>今日動態 (Live Stream)</h5>
+                  <div class="timeline-wrapper ps-4">
+                      <div v-if="hudData.stream.length === 0" class="text-center py-5 text-muted bg-white rounded-3 shadow-sm">
+                          <i class="bi bi-cup-hot fs-1 opacity-25"></i><p class="mt-2">今日尚無新增活動</p>
+                      </div>
+                      <div v-for="(item, idx) in hudData.stream" :key="idx" class="timeline-card-accent" :class="'border-' + getColor(item.source)">
+                          <span class="timeline-dot-hollow" :class="'dot-' + getColor(item.source)"></span>
+                          <div class="d-flex justify-content-between align-items-center mb-2">
+                              <div>
+                                  <span class="tag-sm" :class="'tag-' + getColor(item.source)">{{ item.source }}</span>
+                                  <span class="text-muted ms-2" style="font-size: 0.8rem;">{{ item.date }}</span>
+                              </div>
+                              <a href="#" @click.prevent="openModal(item)" class="text-secondary"><i class="bi bi-pencil-square"></i></a>
+                          </div>
+                          <div class="d-flex justify-content-between align-items-start mb-2">
+                              <h5 class="fw-bold text-dark m-0" :class="{'text-muted text-decoration-line-through': item.isCompleted}">{{ item.item }}</h5>
+                              <span :class="['badge rounded-pill border', getBadgeClass(item.status)]">{{ item.status }}</span>
+                          </div>
+                          <div class="text-muted small ps-1 border-start border-2" style="white-space: pre-wrap;"> {{ item.progress || '暫無描述' }}</div>
+                      </div>
+                  </div>
+              </div>
+              <div class="col-lg-4" v-show="mobileTab === 'pending' || !isMobile">
+                  <h5 class="text-secondary fw-bold mb-3 d-none d-lg-block"><i class="bi bi-exclamation-triangle me-2 text-warning"></i>待處理事項</h5>
+                  <div class="pending-container custom-scrollbar">
+                      <div v-if="hudData.pending.length === 0" class="text-center py-5 text-muted">
+                          <i class="bi bi-check-circle fs-1 text-success opacity-50"></i><p class="mt-2">目前無待處理事項</p>
+                      </div>
+                      <div v-for="(task, idx) in hudData.pending" :key="idx" class="pending-card-tint position-relative" :class="'bg-tint-' + getColor(task.source)">
+                          <div class="d-flex justify-content-between mb-2">
+                              <small class="text-secondary fw-bold" style="font-size: 0.75rem;"><i class="bi bi-calendar me-1"></i>{{ task.date }}</small>
+                              <a href="#" @click.prevent="openModal(task)" class="text-secondary"><i class="bi bi-pencil-square"></i></a>
+                          </div>
+                          <h6 class="fw-bold mb-3 text-dark">{{ task.item }}</h6>
+                          <div class="d-flex justify-content-between align-items-center">
+                              <span class="tag-sm" :class="'tag-' + getColor(task.source)">{{ task.source }}</span>
+                              <span :class="['badge rounded-pill border', getBadgeClass(task.status)]">{{ task.status }}</span>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+          </div>
+      </div>
+
+      <div v-if="currentView === 'list'">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+          <div>
+            <h3 class="fw-bold m-0 text-dark">{{ currentSourceName }}</h3>
+            <span class="text-muted small">
+              <i class="bi bi-funnel-fill me-1"></i>
+              <span v-if="filterDate === 'default'">智慧篩選：今日 + 待辦</span>
+              <span v-else>{{ timeLabel }}</span>
+            </span>
+          </div>
+          
+          <div class="d-flex flex-column flex-md-row gap-2 align-items-center">
+            
+            <div class="d-flex align-items-center gap-3 filter-toolbar">
+              <div class="form-check form-switch m-0 d-flex align-items-center">
+                <input class="form-check-input me-2" type="checkbox" role="switch" id="todoSwitch" 
+                       :checked="filterDate === 'default'" 
+                       @change="toggleTodoMode($event.target.checked)">
+                <label class="form-check-label fw-bold small text-secondary text-nowrap" for="todoSwitch" style="cursor:pointer;">
+                  <i class="bi bi-lightning-charge-fill text-warning me-1"></i>待辦檢視
+                </label>
+              </div>
+
+              <div class="vr text-secondary opacity-25"></div>
+
+              <div class="dropdown">
+                <button class="btn btn-sm dropdown-toggle text-secondary fw-bold border-0" 
+                        type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  <i class="bi bi-calendar3 me-1"></i> {{ timeLabel }}
+                </button>
+                <ul class="dropdown-menu shadow border-0 mt-2 p-2" style="width: 280px;">
+                  <li><h6 class="dropdown-header text-uppercase small ls-1">快速選擇</h6></li>
+                  <li><a class="dropdown-item rounded" href="#" @click.prevent="applyFilter('date', 'week')">本週</a></li>
+                  <li><a class="dropdown-item rounded" href="#" @click.prevent="applyFilter('date', 'month')">本月</a></li>
+                  <li><a class="dropdown-item rounded" href="#" @click.prevent="applyFilter('date', 'last_month')">上個月</a></li>
+                  <li><a class="dropdown-item rounded" href="#" @click.prevent="applyFilter('date', 'quarter')">本季</a></li>
+                  <li><a class="dropdown-item rounded" href="#" @click.prevent="applyFilter('date', 'all')">全部資料</a></li>
+                  
+                  <li><hr class="dropdown-divider my-2"></li>
+                  
+                  <li><h6 class="dropdown-header text-uppercase small ls-1">自訂區間</h6></li>
+                  <li class="px-2 pb-2">
+                    <div class="input-group input-group-sm mb-2">
+                      <input type="date" class="form-control" v-model="customStart">
+                      <span class="input-group-text bg-light border-0">~</span>
+                      <input type="date" class="form-control" v-model="customEnd">
+                    </div>
+                    <button class="btn btn-primary btn-sm w-100 fw-bold" @click="applyFilter('date', 'custom')">
+                      篩選
+                    </button>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="input-group shadow-sm" style="max-width: 250px;">
+              <span class="input-group-text bg-white border-end-0"><i class="bi bi-search"></i></span>
+              <input type="text" class="form-control border-start-0" placeholder="搜尋..." v-model="searchQuery">
+            </div>
+            <button class="btn btn-primary shadow-sm" @click="loadSheet(currentSourceIdx)"><i class="bi bi-arrow-clockwise"></i></button>
+          </div>
+        </div>
+
+        <div class="card shadow-sm border-0 rounded-3 overflow-hidden">
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-hover table-striped mb-0 align-middle" style="min-width: 600px;">
+                <thead class="bg-dark text-white">
+                  <tr>
+                    <th width="8%" class="text-center ps-3">編輯</th>
+                    <th width="12%" class="sortable" @click="sortBy('date')">日期 <i class="bi" :class="getSortIcon('date')"></i></th>
+                    <th width="10%" class="sortable" @click="sortBy('status')">狀態 <i class="bi" :class="getSortIcon('status')"></i></th>
+                    <th width="25%" class="sortable" @click="sortBy('item')">項目 <i class="bi" :class="getSortIcon('item')"></i></th>
+                    <th width="33%">處理進度</th>
+                    <th width="12%" class="d-none d-md-table-cell">更新</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="log in filteredLogs" :key="log.id">
+                    <td class="text-center ps-3">
+                      <button class="btn btn-sm btn-light border" @click="openModal(log)"><i class="bi bi-pencil-square text-primary"></i></button>
+                    </td>
+                    <td class="text-secondary small fw-bold">{{ log.date }}</td>
+                    <td><span class="badge status-badge rounded-pill" :class="getStatusClass(log.status)">{{ log.status }}</span></td>
+                    <td class="text-dark">
+                        <div class="fw-bold">{{ log.item || log.category }}</div>
+                        <div v-if="log.category && log.item" class="text-muted small" style="font-size: 0.8rem;">
+                            <i class="bi bi-tag-fill me-1"></i>{{ log.category }}
+                        </div>
+                    </td>
+                    <td class="text-secondary small" style="white-space: pre-wrap;">{{ log.progress }}</td>
+                    <td class="text-muted small d-none d-md-table-cell">{{ log.updated }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          
+          <div class="card-footer bg-white border-0 py-3 d-flex justify-content-between align-items-center">
+            <span class="text-muted small fw-bold">
+                <i class="bi bi-list-ul me-1"></i> 共 {{ filteredLogs.length }} 筆資料
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div v-if="currentView === 'admin'">
+        <div class="mb-4">
+          <h3 class="fw-bold"><i class="bi bi-speedometer2 me-2 text-danger"></i>分析控制台</h3>
+          <p class="text-muted small">請選擇分析維度與時間區間</p>
+        </div>
+        
+        <div class="console-box">
+          <div class="row g-4 align-items-center">
+            <div class="col-md-4">
+              <label class="form-label fw-bold text-secondary">分析項目</label>
+              <div class="btn-group w-100 type-selector" role="group">
+                <input type="radio" class="btn-check" name="anaType" id="type1" autocomplete="off" :checked="anaType === 'repair'" @change="anaType = 'repair'">
+                <label class="btn btn-outline-primary" for="type1"><i class="bi bi-tools me-1"></i> 資訊報修</label>
+                <input type="radio" class="btn-check" name="anaType" id="type2" autocomplete="off" :checked="anaType === 'needs'" @change="anaType = 'needs'">
+                <label class="btn btn-outline-success" for="type2"><i class="bi bi-cart-plus me-1"></i> 需求申請</label>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold text-secondary">時間區間</label>
+              <div class="d-flex flex-wrap period-selector">
+                <button class="btn" :class="{ active: anaPeriod === 'current_month' }" @click="anaPeriod = 'current_month'">本月</button>
+                <button class="btn" :class="{ active: anaPeriod === 'last_month' }" @click="anaPeriod = 'last_month'">上月</button>
+                <button class="btn" :class="{ active: anaPeriod === 'current_quarter' }" @click="anaPeriod = 'current_quarter'">本季</button>
+                <button class="btn" :class="{ active: anaPeriod === 'last_quarter' }" @click="anaPeriod = 'last_quarter'">上季</button>
+              </div>
+            </div>
+            <div class="col-md-2 d-grid">
+              <label class="form-label d-none d-md-block">&nbsp;</label>
+              <button class="btn btn-primary analyze-btn" @click="runAnalysis()"><i class="bi bi-bar-chart-line-fill me-1"></i> 分析</button>
+            </div>
+          </div>
+        </div>
+
+        <div v-if="showChartArea" id="chartArea" class="dashboard-container">
+            <div class="d-flex justify-content-end mb-3">
+              <button class="btn btn-outline-secondary" @click="downloadReport">
+                <i class="bi bi-download me-2"></i> 下載圖表報告 (PNG)
+              </button>
+            </div>
+            <div class="row g-4">
+              <div class="col-md-6"><div class="dash-box"><div class="info-card"><div class="info-title">{{ dashboardData.title }}</div><div class="info-number">{{ dashboardData.total }}</div><div class="info-period">{{ dashboardData.period }}</div></div></div></div>
+              <div class="col-md-6"><div class="dash-box"><div class="dash-label"><i class="bi bi-pie-chart-fill me-1"></i> 整體狀態分佈</div><div style="position: relative; height: 320px; width: 100%;"><canvas id="pieChartCanvas"></canvas></div></div></div>
+              <div class="col-md-6"><div class="dash-box"><div class="dash-label"><i class="bi bi-building me-1"></i> 部門統計</div><div style="position: relative; height: 320px; width: 100%;"><canvas id="deptChartCanvas"></canvas></div></div></div>
+              <div class="col-md-6"><div class="dash-box"><div class="dash-label"><i class="bi bi-list-task me-1"></i> 項目分類統計</div><div style="position: relative; height: 320px; width: 100%;"><canvas id="catChartCanvas"></canvas></div></div></div>
+            </div>
+        </div>
+        
+        <div class="mt-5 pt-4 border-top">
+           <h5 class="fw-bold text-secondary mb-3"><i class="bi bi-gear me-2"></i>系統維護與進階指令</h5>
+           <div class="row">
+             <div class="col-md-4" v-for="(cat, cIdx) in adminMenu" :key="cIdx">
+                <div v-for="(item, iIdx) in cat.items" :key="iIdx">
+                  <button class="btn admin-btn btn-outline-secondary" @click="runMaintenance(item)">
+                    <i :class="['bi', item.icon, 'me-2']"></i> {{ item.label }}
+                  </button>
+                </div>
+             </div>
+           </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Trend Chart Filter Modal -->
+  <div class="modal fade" id="trendChartFilterModal" tabindex="-1" aria-labelledby="trendChartFilterModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="trendChartFilterModalLabel"><i class="bi bi-funnel-fill me-2"></i>維運負荷趨勢圖 - 篩選設定</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label fw-bold">資料來源</label>
+            <select class="form-select" v-model="trendChartSource">
+              <option value="_ALL_">全部來源</option>
+              <option v-for="src in sources" :key="src.id" :value="src.name">{{ src.name }}</option>
+            </select>
+          </div>
+          <div class="mb-3">
+              <label class="form-label fw-bold">日期區間</label>
+              <div class="input-group">
+                  <input type="date" class="form-control" v-model="chartStartDate">
+                  <span class="input-group-text">~</span>
+                  <input type="date" class="form-control" v-model="chartEndDate">
+              </div>
+          </div>
+          <div class="mb-3">
+              <label class="form-label fw-bold">快速選擇</label>
+              <div class="d-flex flex-wrap gap-2">
+                  <button class="btn btn-sm btn-outline-secondary" @click="setChartDateRange('current_month')">本月</button>
+                  <button class="btn btn-sm btn-outline-secondary" @click="setChartDateRange('last_month')">上月</button>
+                  <button class="btn btn-sm btn-outline-secondary" @click="setChartDateRange('current_quarter')">本季</button>
+                  <button class="btn btn-sm btn-outline-secondary" @click="setChartDateRange('last_quarter')">上季</button>
+              </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+          <button type="button" class="btn btn-primary" @click="fetchTrendData" data-bs-dismiss="modal">
+              <i class="bi bi-search me-1"></i> 確認查詢
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true" ref="editModal">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow-lg">
+        <div class="modal-header text-white" :class="'bg-' + getModalHeaderColor()">
+          <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2"></i>編輯任務</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4">
+          <div class="mb-3">
+            <label class="form-label text-muted small fw-bold">任務來源</label>
+            <div><span class="badge rounded-pill" :class="'bg-' + getModalHeaderColor()">{{ editingTask.source }}</span></div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label text-muted small fw-bold">項目名稱 (唯讀)</label>
+            <div class="p-2 bg-light rounded border text-dark fw-bold">{{ editingTask.item }}</div>
+          </div>
+         <div class="row" v-if="showDeptInputForEdit">
+           <div class="col-6 mb-3">
+             <label class="form-label fw-bold">任務分類</label>
+              <input type="text" class="form-control" v-model="editingTask.category" list="editDynamicCategoryList">
+              <datalist id="editDynamicCategoryList">
+                <option v-for="opt in activeItemListForEdit" :value="opt"></option>
+              </datalist>
+           </div>
+           <div class="col-6 mb-3">
+             <label class="form-label fw-bold">部門別</label>
+              <input type="text" class="form-control" v-model="editingTask.dept" list="editDeptList">
+              <datalist id="editDeptList">
+                  <option v-for="dept in formOptions.depts" :value="dept"></option>
+              </datalist>
+           </div>
+         </div>
+          <div class="mb-3">
+           <label class="form-label fw-bold">目前狀態</label>
+           <select class="form-select" v-model="editingTask.status">
+             <option value="○ 待處理">○ 待處理</option>
+             <option value="➤ 處理中">➤ 處理中</option>
+             <option value="? 待確認">? 待確認</option>
+             <option value="‖ 暫停">‖ 暫停</option>
+             <option value="✖ 取消">✖ 取消</option>
+             <option disabled>──────────</option>
+             <option value="✔ 完成">✔ 完成</option>
+           </select>
+         </div>
+         <div class="mb-3">
+            <label class="form-label fw-bold">處理進度 / 備註</label>
+            <textarea class="form-control" rows="4" v-model="editingTask.progress" placeholder="請輸入最新的處理進度..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer bg-light d-flex justify-content-between">
+          <a :href="editingTask.link" target="_blank" class="btn btn-outline-secondary btn-sm" v-if="editingTask.link"><i class="bi bi-box-arrow-up-right me-1"></i> 開啟原始檔</a>
+          <div>
+            <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">取消</button>
+            <button type="button" class="btn btn-primary px-4 fw-bold" @click="saveEdit" :disabled="isSaving">
+                <span v-if="isSaving" class="spinner-border spinner-border-sm me-2"></span>{{ isSaving ? '儲存中...' : '確認更新' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="createModal" tabindex="-1" aria-hidden="true" ref="createModal">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow-lg">
+        <div class="modal-header bg-success text-white">
+          <h5 class="modal-title fw-bold"><i class="bi bi-plus-lg me-2"></i>新增任務</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4">
+          
+          <div class="mb-3">
+            <label class="form-label fw-bold">任務來源</label>
+            <select class="form-select" v-model="creatingTask.sourceName">
+              <option v-for="src in sources" :value="src.name">{{ src.name }}</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-bold">初始狀態</label>
+            <select class="form-select" v-model="creatingTask.status">
+              <option value="○ 待處理">○ 待處理 (預設)</option>
+              <option value="➤ 處理中">➤ 處理中</option>
+              <option value="? 待確認">? 待確認</option>
+              <option value="✔ 完成">✔ 完成 (直接歸檔)</option>
+            </select>
+          </div>
+
+          <div class="row" v-if="showDeptInput">
+            <div class="col-6 mb-3">
+              <label class="form-label fw-bold">分類 / 子項目</label>
+              <input type="text" class="form-control" v-model="creatingTask.category" list="dynamicCategoryList" placeholder="請選擇分類...">
+              <datalist id="dynamicCategoryList">
+                <option v-for="opt in activeItemList" :value="opt"></option>
+              </datalist>
+            </div>        
+            <div class="col-6 mb-3">
+              <label class="form-label fw-bold">單位(組)</label>
+              <input type="text" class="form-control" v-model="creatingTask.dept" list="deptList" placeholder="請選擇單位...">
+              <datalist id="deptList">
+                  <option v-for="dept in formOptions.depts" :value="dept"></option>
+              </datalist>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-bold">項目說明 <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" v-model="creatingTask.item" placeholder="請輸入詳細狀況 (例如: 無法開機)...">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-bold">詳細描述 / 進度</label>
+            <textarea class="form-control" rows="3" v-model="creatingTask.progress" placeholder="補充說明..."></textarea>
+          </div>
+
+        </div>
+        <div class="modal-footer bg-light">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+          <button type="button" class="btn btn-success px-4 fw-bold" @click="submitCreate" :disabled="isCreating">
+             <span v-if="isCreating" class="spinner-border spinner-border-sm me-2"></span>
+             {{ isCreating ? '寫入中...' : '確認新增' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="resultModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header bg-success text-white">
+          <h5 class="modal-title">執行成功</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4 text-center fs-5">
+          {{ jobResult }}
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">關閉</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+<script>
+  const { createApp, markRaw } = Vue;
+
+  createApp({
+    data() {
+      return {
+        isAuthenticated: true,
+        loading: false,
+        loadingText: '載入中...',
+        currentView: 'dashboard', 
+        isMobile: window.innerWidth < 768,
+        mobileTab: 'stream',
+        dashboardLoading: false,
+        hudData: { kpi: { todayNew: 0, todayDone: 0, pendingTotal: 0 }, stream: [], pending: [] },
+        todayDateStr: '',
+        showTrendChart: false,
+        isTrendChartInitiated: false, // 追蹤圖表是否已初始化 (查詢過)
+        trendChartInstance: null,
+        chartLoading: false,
+        chartStartDate: '',
+        chartEndDate: '',
+        lastTrendData: null, // 儲存上次的趨勢圖資料
+        trendChartShowLabels: true, // 控制趨勢圖資料標籤
+        trendChartSource: '_ALL_', // 趨勢圖的資料來源篩選器
+        debouncedFetchTrendData: null,
+        sources: [],
+        currentSourceIdx: 0,
+        logs: [],
+        currentMeta: {},
+        searchQuery: '',
+        
+        // 🟢 管理選單 (寫死版)
+        adminMenu: [
+            {
+              category: "🛠️ 系統維護",
+              icon: "bi-gear-wide-connected",
+              items: [
+                { label: "重送今日日報", func: "重新寄送本日logbook", icon: "bi-envelope-paper" },
+                { label: "刷新代碼快取", func: "測試_刷新代碼快取", icon: "bi-arrow-clockwise" },
+                { label: "檢查分類完整性", func: "測試_檢查報修資料完整性", icon: "bi-list-check" },
+                { label: "檢查 UUID 狀態", func: "測試_檢查UUID狀態", icon: "bi-fingerprint" },
+                { label: "補填遺失 UUID", func: "測試_補填UUID", icon: "bi-database-add" }
+              ]
+            }
+        ],
+        
+        showMobileMenu: false,
+        filterDate: 'default',
+        timeLabel: '時間範圍', 
+        customStart: '', // 🟢 自訂日期起
+        customEnd: '',   // 🟢 自訂日期迄
+        jobResult: '',
+        sortKey: 'date',
+        sortOrder: -1,
+        anaType: 'repair', anaPeriod: 'current_month', showChartArea: false, chartImages: [], dashboardData: { total: 0, title: '', period: '' },
+        
+        deptChartInstance: null,
+        catChartInstance: null,
+        pieChartInstance: null,
+
+        formOptions: { depts: [], repairItems: [], needsItems: [] },
+        pollingTimer: null,
+        isSaving: false,
+        editModalInstance: null,
+        editingTask: { uuid: '', source: '', item: '', category: '', dept: '', status: '', progress: '', link: '' },
+        isCreating: false,
+        createModalInstance: null,
+        creatingTask: { sourceName: '', category: '', item: '', status: '○ 待處理', progress: '', dept: '' }
+      }
+    },
+    computed: {
+      currentSourceName() { return this.sources.length === 0 ? "載入中..." : this.sources[this.currentSourceIdx].name; },
+      
+      activeItemList() {
+       const src = this.creatingTask.sourceName || "";
+       if (src.includes("需求")) return this.formOptions.needsItems;
+       if (src.includes("報修") || src.includes("資訊") || src.includes("Project")) return this.formOptions.repairItems;
+       return this.formOptions.repairItems;
+     },
+     activeItemListForEdit() {
+       const src = this.editingTask.source || "";
+       if (src.includes("需求")) return this.formOptions.needsItems;
+       if (src.includes("報修") || src.includes("資訊") || src.includes("Project")) return this.formOptions.repairItems;
+       return this.formOptions.repairItems;
+     },
+      showDeptInput() {
+        const src = this.creatingTask.sourceName || "";
+        if (src.includes("工作") || (src.includes("資訊") && src.includes("進度"))) return false;
+        return true;
+      },
+
+     showDeptInputForEdit() {
+       const src = this.editingTask.source || "";
+       if (src.includes("工作") || (src.includes("資訊") && src.includes("進度"))) return false;
+       return true;
+     },
+
+      filteredLogs() {
+        let result = this.logs;
+        const now = new Date();
+        const todayStr = this.formatDateStr(now);
+
+        // 1. 時間篩選 (支援區間 + 自訂)
+        if (this.filterDate === 'default') {
+           result = result.filter(log => {
+             const isToday = (log.date === todayStr);
+             const isFinished = log.status.includes("完成") || log.status.includes("✔") || log.status.includes("取消");
+             return isToday || !isFinished;
+           });
+        } else if (this.filterDate !== 'all') {
+           let start = null;
+           let end = null;
+           const y = now.getFullYear();
+           const m = now.getMonth(); 
+           
+           if (this.filterDate === 'custom') {
+               // 🟢 自訂日期邏輯
+               const sStr = this.customStart.replace(/-/g, '/');
+               const eStr = this.customEnd.replace(/-/g, '/');
+               result = result.filter(log => log.date >= sStr && log.date <= eStr);
+               // 跳過標準邏輯
+           } else {
+               // 標準區間邏輯
+               if (this.filterDate === 'week') {
+                 start = new Date(now); start.setHours(-24 * (now.getDay()));
+               } else if (this.filterDate === 'month') {
+                 start = new Date(y, m, 1);
+               } else if (this.filterDate === 'last_month') {
+                 start = new Date(y, m - 1, 1); end = new Date(y, m, 0); 
+               } else if (this.filterDate === 'quarter') {
+                 start = new Date(y, Math.floor(m/3)*3, 1);
+               } else if (this.filterDate === 'year') {
+                 start = new Date(y, 0, 1);
+               }
+
+               if (start) {
+                   const sStr = this.formatDateStr(start);
+                   const eStr = end ? this.formatDateStr(end) : "9999/99/99"; 
+                   result = result.filter(log => log.date >= sStr && log.date <= eStr);
+               }
+           }
+        }
+
+        // 2. 關鍵字搜尋 (🟢 升級：包含分類)
+        if (this.searchQuery) {
+          const lowerQ = this.searchQuery.toLowerCase();
+          result = result.filter(log => 
+            (log.item && log.item.toLowerCase().includes(lowerQ)) || 
+            (log.progress && log.progress.toLowerCase().includes(lowerQ)) ||
+            (log.category && log.category.toLowerCase().includes(lowerQ))
+          );
+        }
+        
+        // 3. 排序
+        return [...result].sort((a, b) => {
+           let va = a[this.sortKey] || '', vb = b[this.sortKey] || '';
+           return (va < vb ? -1 : va > vb ? 1 : 0) * this.sortOrder;
+        });
+      }
+    },
+    methods: {
+      debounce(func, delay) {
+        let timeout;
+        return (...args) => {
+          console.log(`ACTION: Debounced function called. Timer reset.`);
+          clearTimeout(timeout);
+          timeout = setTimeout(() => func.apply(this, args), delay);
+        };
+      },
+      setChartDateRange(period) {
+        console.log(`ACTION: setChartDateRange called with period '${period}'`);
+        const now = new Date();
+        let start = new Date();
+        let end = new Date();
+        const y = now.getFullYear();
+        const m = now.getMonth();
+
+        switch (period) {
+            case 'current_month':
+                start = new Date(y, m, 1);
+                end = new Date(y, m + 1, 0);
+                break;
+            case 'last_month':
+                start = new Date(y, m - 1, 1);
+                end = new Date(y, m, 0);
+                break;
+            case 'current_quarter':
+                const q = Math.floor(m / 3);
+                start = new Date(y, q * 3, 1);
+                end = new Date(y, q * 3 + 3, 0);
+                break;
+            case 'last_quarter':
+                const currentQ = Math.floor(m / 3);
+                let targetQ = currentQ - 1;
+                let targetY = y;
+                if (targetQ < 0) {
+                    targetQ = 3;
+                    targetY = y - 1;
+                }
+                start = new Date(targetY, targetQ * 3, 1);
+                end = new Date(targetY, targetQ * 3 + 3, 0);
+                break;
+        }
+        this.chartStartDate = this.formatDateStr(start).replace(/\//g, '-');
+        this.chartEndDate = this.formatDateStr(end).replace(/\//g, '-');
+        this.fetchTrendData();
+      },
+       toggleTrendChart() {
+         this.showTrendChart = !this.showTrendChart;
+         if (this.showTrendChart && !this.isTrendChartInitiated) {
+            const today = new Date();
+            const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+            this.chartStartDate = this.formatDateStr(startOfMonth).replace(/\//g, '-');
+            this.chartEndDate = this.formatDateStr(today).replace(/\//g, '-');
+         }
+       },
+       fetchTrendData() {
+         console.log(`EXEC: fetchTrendData starting for ${this.chartStartDate} to ${this.chartEndDate}`);
+         if (!this.chartStartDate || !this.chartEndDate) {
+           console.log("Start or end date for chart is missing.");
+           return;
+         }
+         this.chartLoading = true;
+         const payload = {
+           startDate: this.chartStartDate.replace(/-/g, '/'),
+           endDate: this.chartEndDate.replace(/-/g, '/'),
+           sourceName: this.trendChartSource
+         };
+
+         google.script.run
+           .withSuccessHandler(response => {
+             console.log("EXEC: fetchTrendData success. Received data:", response);
+             this.isTrendChartInitiated = true;
+             this.chartLoading = false;
+             
+             this.$nextTick(() => {
+               if (!this.trendChartInstance) {
+                 this.initTrendChart(response);
+               } else {
+                 // In-place update
+                 this.trendChartInstance.data.labels = response.labels;
+                 this.trendChartInstance.data.datasets = this.processChartData(response).data.datasets; // Apply styling
+                 this.trendChartInstance.update();
+               }
+             });
+           })
+           .withFailureHandler(error => {
+             this.chartLoading = false;
+             console.error('Error fetching trend data:', error);
+           })
+           .apiGetTrendData(payload);
+       },
+initTrendChart(data) {
+  console.log("INIT: initTrendChart starting.");
+  if (this.trendChartInstance) {
+    this.trendChartInstance.destroy();
+  }
+
+  const canvasEl = document.getElementById('trendChart');
+  if (!canvasEl) {
+    console.error("INIT: Canvas not found.");
+    return;
+  }
+  
+  // 重置內聯樣式以處理桌面/行動裝置切換
+  canvasEl.style.width = '';
+  canvasEl.style.height = '';
+  canvasEl.removeAttribute('width');
+  canvasEl.removeAttribute('height');
+
+  const ctx = canvasEl.getContext('2d');
+  const processedData = this.processChartData(data);
+  const chartTitle = this.generateChartTitle();
+
+  const isMobile = window.innerWidth < 600;
+  let chartOptions;
+
+  if (isMobile) {
+    console.log("INIT: Mobile device detected. Applying fixed size chart with scroll.");
+    // --- 行動裝置路徑 ---
+    const chartWidth = 800;
+    const chartHeight = 300; // 依使用者要求：從 350 改為 300
+    const dpr = window.devicePixelRatio || 1;
+    
+    // 設定畫布的物理和邏輯尺寸
+    canvasEl.width = chartWidth * dpr;
+    canvasEl.height = chartHeight * dpr;
+    canvasEl.style.width = `${chartWidth}px`;
+    canvasEl.style.height = `${chartHeight}px`;
+
+    // 針對高 DPI 縮放上下文
+    ctx.scale(dpr, dpr);
+
+    chartOptions = {
+      responsive: false,
+      maintainAspectRatio: false,
+      scales: {
+        x: { stacked: true, grid: { display: false }, ticks: { autoSkip: true, maxTicksLimit: 15, callback: function(value) { const label = this.getLabelForValue(value); if (label && label.includes('/')) { const parts = label.split('/'); return parts.length >= 3 ? `${parts[1]}/${parts[2]}` : label; } return label; } } },
+        y: { beginAtZero: true, grid: { borderDash: [4, 4], color: '#e9ecef' } }
+      },
+      plugins: {
+        title: { display: true, text: chartTitle, font: { size: 16, weight: 'bold' }, padding: { bottom: 15 } },
+        legend: { position: 'bottom' },
+        tooltip: { mode: 'index', intersect: false, backgroundColor: 'rgba(255, 255, 255, 0.95)', titleColor: '#000', bodyColor: '#333', borderColor: '#ddd', borderWidth: 1, padding: 10, callbacks: { label: context => ` ${context.dataset.label}: ${context.raw}` } },
+        datalabels: { display: this.trendChartShowLabels }
+      },
+      interaction: { mode: 'index', intersect: false }
+    };
+
+  } else {
+    console.log("INIT: Desktop device detected. Applying responsive chart.");
+    // --- 桌面裝置路徑 ---
+    // 此處不需任何樣式操作，讓 Chart.js 的響應式機制自行處理
+    chartOptions = {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: { stacked: true, grid: { display: false }, ticks: { autoSkip: true, maxTicksLimit: 15, callback: function(value) { const label = this.getLabelForValue(value); if (label && label.includes('/')) { const parts = label.split('/'); return parts.length >= 3 ? `${parts[1]}/${parts[2]}` : label; } return label; } } },
+        y: { beginAtZero: true, grid: { borderDash: [4, 4], color: '#e9ecef' } }
+      },
+      plugins: {
+        title: { display: true, text: chartTitle, font: { size: 16, weight: 'bold' }, padding: { bottom: 15 } },
+        legend: { position: 'bottom' },
+        tooltip: { mode: 'index', intersect: false, backgroundColor: 'rgba(255, 255, 255, 0.95)', titleColor: '#000', bodyColor: '#333', borderColor: '#ddd', borderWidth: 1, padding: 10, callbacks: { label: context => ` ${context.dataset.label}: ${context.raw}` } },
+        datalabels: { display: this.trendChartShowLabels }
+      },
+      interaction: { mode: 'index', intersect: false }
+    };
+  }
+
+  this.trendChartInstance = markRaw(new Chart(ctx, {
+    type: 'bar',
+    data: processedData.data,
+    options: chartOptions
+  }));
+},
+       updateTrendChart() {
+         console.log(`UPDATE: updateTrendChart. Show Labels: ${this.trendChartShowLabels}`);
+         if (!this.trendChartInstance) {
+           console.warn("UPDATE: No chart instance to update.");
+           return;
+         }
+         
+         this.trendChartInstance.options.plugins.datalabels.display = this.trendChartShowLabels;
+         this.trendChartInstance.update('none'); // Use 'none' for better performance
+       },
+       processChartData(data) {
+          if (!data || !data.labels || data.labels.length === 0) {
+             return { data: { labels: [], datasets: [] } };
+          }
+          
+          if (data.datasets && data.datasets.length > 2) {
+              data.datasets[0] = { ...data.datasets[0], type: 'bar', label: '當日新增', backgroundColor: 'rgba(13, 110, 253, 0.25)', borderColor: 'transparent', barPercentage: 1.0, categoryPercentage: 0.8, grouped: false, order: 3 };
+              data.datasets[1] = { ...data.datasets[1], type: 'bar', label: '當日完成', backgroundColor: '#198754', borderColor: 'white', borderWidth: 1, barPercentage: 0.5, categoryPercentage: 0.8, grouped: false, order: 2 };
+              data.datasets[2] = { ...data.datasets[2], type: 'line', label: '累積待處理', borderWidth: 3, borderColor: '#dc3545', backgroundColor: 'rgba(220, 53, 69, 0.1)', fill: true, tension: 0.3, pointRadius: 0, pointHoverRadius: 6, order: 1 };
+          }
+          return { data };
+       },
+       generateChartTitle() {
+           const startDate = new Date(this.chartStartDate);
+           const endDate = new Date(this.chartEndDate);
+           const diffDays = (endDate - startDate) / (1000 * 60 * 60 * 24);
+           let dateTitlePart = `${startDate.getFullYear()}/${String(startDate.getMonth() + 1).padStart(2, '0')}`;
+           if (diffDays > 80) {
+               const quarter = Math.floor(startDate.getMonth() / 3) + 1;
+               dateTitlePart = `${startDate.getFullYear()}/Q${quarter}`;
+           }
+           return `IT 維運負荷量趨勢圖 (${dateTitlePart})`;
+       },
+      formatDateStr(d) {
+        return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`;
+      },
+      toggleMobileMenu() { this.showMobileMenu = !this.showMobileMenu; },
+      sortBy(key) { if (this.sortKey === key) this.sortOrder *= -1; else { this.sortKey = key; this.sortOrder = -1; } },
+      getSortIcon(key) { return this.sortKey !== key ? 'bi-arrow-down-up text-muted opacity-25' : (this.sortOrder === 1 ? 'bi-sort-up text-primary' : 'bi-sort-down text-primary'); },
+
+      init() {
+        window.addEventListener('resize', () => { this.isMobile = window.innerWidth < 768; });
+        this.todayDateStr = this.formatDateStr(new Date());
+
+        this.startLoading('初始化系統...');
+        google.script.run.withSuccessHandler(res => { this.sources = res; }).apiGetSources();
+        google.script.run.withSuccessHandler(res => { this.formOptions = res; }).apiGetFormOptions();
+
+        this.loadDashboard();
+      },
+      
+      loadAdminPanel() {
+        this.currentView = 'admin'; 
+        this.showChartArea = false; 
+      },
+
+      loadSheet(idx) {
+        this.currentView = 'list'; this.currentSourceIdx = idx; 
+        
+        this.startLoading('讀取資料庫...');
+        this.logs = [];
+        const target = this.sources[idx];
+        
+        google.script.run.withSuccessHandler(res => {
+          const sourceName = this.sources[idx].name;
+          res.data.forEach(row => {
+            row.source = sourceName;
+          });
+          this.logs = res.data;
+          this.stopLoading();
+        }).apiGetSheetData(target.id, target.sheet);
+      },
+      
+      toggleTodoMode(isChecked) {
+        if (isChecked) this.applyFilter('date', 'default');
+        else this.applyFilter('date', 'all');
+      },
+
+      applyFilter(type, value) {
+        if (type === 'date') {
+            // The watcher will automatically trigger a chart refresh if needed.
+            this.filterDate = value;
+            const map = {
+                'default': '時間範圍', 'all': '全部資料',
+                'week': '本週', 'month': '本月', 'last_month': '上個月',
+                'quarter': '本季', 'year': '今年', 'custom': '自訂區間'
+            };
+            
+            if (value === 'custom') {
+               if(!this.customStart || !this.customEnd) { alert("請選擇日期"); return; }
+               this.timeLabel = `${this.customStart} ~ ${this.customEnd}`;
+            } else {
+               this.timeLabel = map[value] || '時間範圍';
+            }
+        }
+      },
+
+      loadDashboard(silent = false) {
+        this.currentView = 'dashboard'; 
+        this.dashboardLoading = true; 
+        if (!silent) this.startLoading('儀表板載入中...');
+        
+        google.script.run.withSuccessHandler(res => { 
+          this.hudData = res; 
+          this.dashboardLoading = false; 
+          this.stopLoading(); 
+        }).apiGetGlobalSummary();
+      },
+
+      startPolling() {
+        if (this.pollingTimer) clearInterval(this.pollingTimer);
+        this.pollingTimer = setInterval(() => {
+          if (this.currentView === 'dashboard') {
+            this.loadDashboard(true);
+          }
+        }, 30000); 
+      },
+
+      getColor(name) { if (!name) return 'gray'; const n = name.toLowerCase(); if (n.includes('需求')) return 'purple'; if (n.includes('資訊')) return 'green'; if (n.includes('報修')) return 'blue'; return 'gray'; },
+      getBadgeClass(s) {
+        if (!s) return 'bg-secondary bg-opacity-10 text-secondary border-secondary';
+        if (s.includes('?') || s.includes('待確認')) return 'bg-danger bg-opacity-10 text-danger border-danger';
+        if (s.includes('➤') || s.includes('處理中')) return 'bg-warning bg-opacity-10 text-dark border-warning';
+        if (s.includes('○') || s.includes('待處理')) return 'bg-info bg-opacity-10 text-dark border-info';
+        if (s.includes('‖') || s.includes('暫停')) return 'bg-secondary bg-opacity-10 text-secondary border-secondary';
+        if (s.includes('✔') || s.includes('完成')) return 'bg-success bg-opacity-10 text-success border-success';
+        return 'bg-secondary bg-opacity-10 text-secondary border-secondary';
+      },
+      getModalHeaderColor() { const s = this.editingTask.source || ''; if (s.includes('需求')) return 'purple'; if (s.includes('資訊')) return 'success'; if (s.includes('報修')) return 'primary'; return 'dark'; },
+      getStatusClass(s) { return this.getBadgeClass(s); },
+      startLoading(text) { this.loading = true; this.loadingText = text; },
+      stopLoading() { this.loading = false; },
+
+      openModal(task) {
+        if (!task.uuid) { alert("UUID 失效"); return; }
+        this.editingTask = JSON.parse(JSON.stringify(task));
+        
+        // 若資料缺失 source，則預設使用當前列表的 sourceName
+        if (!this.editingTask.source && this.currentSourceName) {
+            this.editingTask.source = this.currentSourceName;
+        }
+        
+        // 確保 editingTask 有 category 和 dept 屬性
+        if (!this.editingTask.category) this.editingTask.category = '';
+        if (!this.editingTask.dept) this.editingTask.dept = '';
+
+        if (!this.editModalInstance) this.editModalInstance = new bootstrap.Modal(document.getElementById('editModal'));
+        this.editModalInstance.show();
+      },
+      saveEdit() {
+        if (!this.editingTask.uuid) return;
+        this.isSaving = true;
+        const payload = {
+          uuid: this.editingTask.uuid,
+          sourceName: this.editingTask.source,
+          updates: {
+            status: this.editingTask.status,
+            progress: this.editingTask.progress,
+            category: this.editingTask.category,
+            dept: this.editingTask.dept
+          }
+        };
+        google.script.run.withSuccessHandler(res => {
+           this.isSaving = false;
+           if (res.success) { this.editModalInstance.hide(); this.updateLocalTask(this.editingTask); }
+           else { alert("失敗：" + res.message); }
+        }).apiUpdateTask(payload);
+      },
+      updateLocalTask(updated) {
+        const patch = (list) => {
+          const target = list.find(t => t.uuid === updated.uuid);
+          if (target) {
+            target.status = updated.status;
+            target.progress = updated.progress;
+            target.category = updated.category;
+            target.dept = updated.dept;
+            target.isCompleted = (updated.status.includes('完成') || updated.status.includes('✔'));
+          }
+        };
+        patch(this.hudData.stream); patch(this.hudData.pending); patch(this.logs);
+      },
+
+      openCreateModal() {
+        if (this.currentView === 'list' && this.sources[this.currentSourceIdx]) {
+           this.creatingTask.sourceName = this.sources[this.currentSourceIdx].name;
+        } else if (this.sources.length > 0) {
+           this.creatingTask.sourceName = this.sources[0].name;
+        }
+        
+        this.creatingTask.category = ''; 
+        this.creatingTask.item = ''; 
+        this.creatingTask.status = '○ 待處理'; 
+        this.creatingTask.progress = '';
+        this.creatingTask.dept = ''; 
+        
+        if (!this.createModalInstance) this.createModalInstance = new bootstrap.Modal(document.getElementById('createModal'));
+        this.createModalInstance.show();
+      },
+      submitCreate() {
+        if (!this.creatingTask.sourceName) { alert("請選擇來源"); return; }
+        this.isCreating = true;
+        
+        const payload = {
+           sourceName: this.creatingTask.sourceName,
+           data: { 
+             category: this.creatingTask.category, 
+             item: this.creatingTask.item,         
+             status: this.creatingTask.status, 
+             progress: this.creatingTask.progress, 
+             dept: this.creatingTask.dept 
+           }
+        };
+        google.script.run.withSuccessHandler(res => {
+           this.isCreating = false;
+           if (res.success) {
+              alert("新增成功！");
+              this.createModalInstance.hide();
+              if (this.currentView === 'list' && this.currentSourceName === this.creatingTask.sourceName) this.loadSheet(this.currentSourceIdx);
+              else if (this.currentView === 'dashboard') this.loadDashboard();
+           } else { alert("失敗：" + res.message); }
+        }).apiCreateTask(payload);
+      },
+
+      runAnalysis() {
+        const typeLabel = this.anaType === 'repair' ? '資訊報修' : '需求申請';
+        this.startLoading(`分析中：${typeLabel} (${this.anaPeriod})...`);
+        this.showChartArea = false;
+        
+        google.script.run.withSuccessHandler(res => {
+          this.stopLoading();
+          if (res.success) {
+            this.dashboardData = res.summary;
+            this.showChartArea = true;
+            this.$nextTick(() => {
+              this.renderAnalysisCharts(res);
+              document.getElementById('chartArea').scrollIntoView({ behavior: 'smooth' });
+            });
+          } else {
+            alert("分析失敗: " + res.message);
+          }
+        }).withFailureHandler(err => {
+            this.stopLoading();
+            alert("執行錯誤: " + err.message);
+        }).apiGetAnalysisData({ type: this.anaType, period: this.anaPeriod });
+      },
+
+      renderAnalysisCharts(data) {
+        const barOptions = {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                datalabels: {
+                    anchor: 'end',
+                    align: 'end',
+                    color: '#555',
+                    font: { weight: 'bold' }
+                }
+            },
+            scales: {
+                x: { ticks: { precision: 0 } }
+            }
+        };
+        this.renderBarChart('deptChartCanvas', 'deptChartInstance', data.deptChartData, '部門統計', barOptions);
+        this.renderBarChart('catChartCanvas', 'catChartInstance', data.catChartData, '項目分類統計', barOptions);
+        
+        const pieOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            rotation: 120,
+            plugins: {
+                legend: { position: 'bottom' },
+                datalabels: {
+                    formatter: (value, ctx) => {
+                        const sum = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                        const percentage = (value / sum) * 100;
+                        if (sum === 0) return "0 (0.0%)";
+                        return `${value}\n(${percentage.toFixed(1)}%)`;
+                    },
+                    font: { weight: 'bold', size: 14 },
+                    color: (context) => {
+                        const sum = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                        const value = context.dataset.data[context.dataIndex];
+                        const percentage = (value / sum) * 100;
+                        return percentage < 15 ? '#495057' : '#fff';
+                    },
+                    align: (context) => {
+                        const sum = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                        const value = context.dataset.data[context.dataIndex];
+                        const percentage = (value / sum) * 100;
+                        return percentage < 15 ? 'end' : 'center';
+                    },
+                    anchor: (context) => {
+                        const sum = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                        const value = context.dataset.data[context.dataIndex];
+                        const percentage = (value / sum) * 100;
+                        return percentage < 15 ? 'end' : 'center';
+                    },
+                    offset: 4,
+                    clamp: true
+                }
+            }
+        };
+        this.renderPieChart('pieChartCanvas', 'pieChartInstance', data.pieChartData, '整體狀態分佈', pieOptions);
+      },
+
+      renderBarChart(canvasId, instanceName, chartData, title, options) {
+        if (this[instanceName]) {
+            this[instanceName].destroy();
+            this[instanceName] = null;
+        }
+
+        const finalOptions = JSON.parse(JSON.stringify(options));
+        if (chartData.datasets[0] && chartData.datasets[0].data.length > 0) {
+            const maxValue = Math.max(...chartData.datasets[0].data);
+            const stepSize = finalOptions.scales?.x?.ticks?.stepSize || 2;
+            
+            if (!finalOptions.scales) finalOptions.scales = {};
+            if (!finalOptions.scales.x) finalOptions.scales.x = {};
+            
+            finalOptions.scales.x.suggestedMax = maxValue + stepSize;
+
+            // 保留以下設定以確保標籤完整顯示
+            if (!finalOptions.scales.x.ticks) finalOptions.scales.x.ticks = {};
+            finalOptions.scales.x.ticks.includeBounds = true;
+            if (!finalOptions.layout) finalOptions.layout = {};
+            finalOptions.layout.padding = { right: 30 };
+        }
+        
+        const ctx = document.getElementById(canvasId).getContext('2d');
+        this[instanceName] = new Chart(ctx, {
+            type: 'bar',
+            data: chartData,
+            options: { ...finalOptions, plugins: { ...finalOptions.plugins, title: { display: true, text: title } } }
+        });
+      },
+
+      renderPieChart(canvasId, instanceName, chartData, title, options) {
+        if (this[instanceName]) {
+            this[instanceName].destroy();
+            this[instanceName] = null;
+        }
+        const ctx = document.getElementById(canvasId).getContext('2d');
+        this[instanceName] = new Chart(ctx, {
+            type: 'pie',
+            data: chartData,
+            options: { ...options, plugins: { ...options.plugins, title: { display: true, text: title } } }
+        });
+      },
+      
+      downloadReport() {
+        this.startLoading(`產生報告圖檔中...`);
+        try {
+          if (!this.pieChartInstance || !this.deptChartInstance || !this.catChartInstance) {
+            throw new Error("並非所有圖表都已成功渲染。");
+          }
+
+          const charts = [
+            { instance: this.pieChartInstance, filename: `整體狀態分佈.png` },
+            { instance: this.deptChartInstance, filename: `部門統計.png` },
+            { instance: this.catChartInstance, filename: `項目分類統計.png` }
+          ];
+
+          const reportTitle = this.dashboardData.title || 'AnalysisReport';
+
+          charts.forEach(chartInfo => {
+              const link = document.createElement('a');
+              link.href = chartInfo.instance.toBase64Image();
+              link.download = `${reportTitle}_${chartInfo.filename}`;
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+          });
+          
+          this.stopLoading();
+        } catch (error) {
+          this.stopLoading();
+          console.error("圖表下載失敗:", error);
+          alert(`圖表下載失敗: ${error.message}`);
+        }
+      },
+
+      runMaintenance(item) {
+        if (!confirm(`執行「${item.label}」？`)) return;
+        this.startLoading(`執行中：${item.label}...`);
+        google.script.run.withSuccessHandler(res => { this.stopLoading(); this.jobResult = res; new bootstrap.Modal(document.getElementById('resultModal')).show(); }).apiRunAdminJob(item.func, 'job');
+      }
+    },
+    mounted() {
+      this.debouncedFetchTrendData = this.debounce(this.fetchTrendData, 300);
+      this.init();
+      this.startPolling();
+      // ChartJS plugins are registered globally, so we only need to do this once.
+      Chart.register(ChartDataLabels);
+    }
+  }).mount('#app');
+</script>
+
+</body>
+</html>

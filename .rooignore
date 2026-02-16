@@ -1,0 +1,27 @@
+# .rooignore - 排除 AI 不需讀取的檔案以節省 Token
+
+# 1. 依賴套件 (絕對禁止讀取)
+node_modules/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# 2. 建置輸出 (GAS 部署檔)
+dist/
+build/
+.output/
+
+# 3. GAS 相關設定 (通常不需 AI 修改)
+.clasp.json
+appsscript.json
+
+# 4. 版本控制與編輯器設定
+.git/
+.vscode/
+.idea/
+
+# 5. 其他雜項
+*.log
+.DS_Store
+
+# (視情況排除 README，若您不需要 AI 讀取專案說明)
