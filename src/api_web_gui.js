@@ -88,6 +88,26 @@ function apiGetAdminMenu() {
   return getAdminMenuConfig();
 }
 
+/**
+ * 建立一個全新的資料來源 Spreadsheet。
+ * @param {{ type: string, name: string }} payload
+ */
+// eslint-disable-next-line no-unused-vars
+function apiProvisionSource(payload) {
+  const { type, name } = payload;
+  return provisionSource(type, name || null);
+}
+
+/**
+ * 補齊現有來源工作表缺少的欄位。
+ * @param {{ type: string, ssId: string, sheetName: string }} payload
+ */
+// eslint-disable-next-line no-unused-vars
+function apiMigrateSchema(payload) {
+  const { type, ssId, sheetName } = payload;
+  return migrateSchema(type, ssId, sheetName || null);
+}
+
 function apiRunAdminJob(payload, jobType) {
   if (jobType === 'chart') {
     return generateAnalysisReport(payload.type, payload.period);

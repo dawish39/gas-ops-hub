@@ -473,6 +473,48 @@
              </div>
            </div>
         </div>
+
+        <div class="mt-5 pt-4 border-top">
+          <h5 class="fw-bold text-secondary mb-3"><i class="bi bi-database-add me-2"></i>資料來源管理</h5>
+
+          <div class="admin-card p-3 mb-3">
+            <div class="fw-bold mb-3"><i class="bi bi-plus-circle me-2 text-success"></i>建立新來源</div>
+            <div class="row g-2 align-items-end">
+              <div class="col-md-3">
+                <label class="form-label small fw-bold">類型</label>
+                <select class="form-select form-select-sm" v-model="provisionType">
+                  <option value="repair">repair（維修記錄）</option>
+                  <option value="daily">daily（日常工作）</option>
+                  <option value="needs">needs（需求追蹤）</option>
+                </select>
+              </div>
+              <div class="col-md-5">
+                <label class="form-label small fw-bold">Spreadsheet 名稱（選填）</label>
+                <input type="text" class="form-control form-control-sm" v-model="provisionName" placeholder="例：2026年維修記錄">
+              </div>
+              <div class="col-md-4">
+                <button class="btn btn-success btn-sm w-100" @click="provisionNewSource()">
+                  <i class="bi bi-plus-circle-fill me-1"></i>建立來源
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="admin-card p-3">
+            <div class="fw-bold mb-3"><i class="bi bi-list-ul me-2 text-primary"></i>現有來源</div>
+            <div v-if="sources.length === 0" class="text-muted small">尚無已啟用的資料來源</div>
+            <div v-for="src in sources" :key="src.id" class="d-flex align-items-center justify-content-between py-2 border-bottom">
+              <div>
+                <span class="badge bg-secondary me-2">{{ src.type || '-' }}</span>
+                <span class="fw-bold">{{ src.name }}</span>
+                <small class="text-muted ms-2">{{ src.sheet }}</small>
+              </div>
+              <button class="btn btn-sm btn-outline-primary" @click="migrateSourceSchema(src)" :disabled="!src.type">
+                <i class="bi bi-arrow-up-circle me-1"></i>補齊欄位
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -737,6 +779,8 @@
         editModalInstance: null,
         editingTask: { uuid: '', source: '', item: '', category: '', dept: '', status: '', progress: '', link: '' },
         isCreating: false,
+        provisionType: 'repair',
+        provisionName: '',
         createModalInstance: null,
         creatingTask: { sourceName: '', category: '', item: '', status: '○ 待處理', progress: '', dept: '' }
       }
@@ -1394,6 +1438,43 @@ initTrendChart(data) {
         if (!confirm(`執行「${item.label}」？`)) return;
         this.startLoading(`執行中：${item.label}...`);
         google.script.run.withSuccessHandler(res => { this.stopLoading(); this.jobResult = res; new bootstrap.Modal(document.getElementById('resultModal')).show(); }).apiRunAdminJob(item.func, 'job');
+      },
+
+      provisionNewSource() {
+        const name = this.provisionName.trim() || `IT Log - ${this.provisionType}`;
+        if (!confirm(`建立新的「${this.provisionType}」來源「${name}」？\n\n這會在你的 Google Drive 建立一個新的 Spreadsheet。`)) return;
+        this.startLoading('建立資料來源中，請稍候...');
+        google.script.run
+          .withSuccessHandler(res => {
+            this.stopLoading();
+            this.jobResult = res;
+            new bootstrap.Modal(document.getElementById('resultModal')).show();
+            google.script.run.withSuccessHandler(s => { this.sources = s; }).apiGetSources();
+          })
+          .withFailureHandler(err => {
+            this.stopLoading();
+            this.jobResult = '❌ ' + err.message;
+            new bootstrap.Modal(document.getElementById('resultModal')).show();
+          })
+          .apiProvisionSource({ type: this.provisionType, name: this.provisionName.trim() });
+      },
+
+      migrateSourceSchema(src) {
+        if (!src.type) { alert('此來源缺少 type 欄位，無法補齊。請先在 Config Sheet 的 F 欄填入類型（repair / daily / needs）。'); return; }
+        if (!confirm(`補齊「${src.name}」的缺少欄位？\n\n只會新增欄位，不影響現有資料。`)) return;
+        this.startLoading(`補齊欄位中：${src.name}...`);
+        google.script.run
+          .withSuccessHandler(res => {
+            this.stopLoading();
+            this.jobResult = res;
+            new bootstrap.Modal(document.getElementById('resultModal')).show();
+          })
+          .withFailureHandler(err => {
+            this.stopLoading();
+            this.jobResult = '❌ ' + err.message;
+            new bootstrap.Modal(document.getElementById('resultModal')).show();
+          })
+          .apiMigrateSchema({ type: src.type, ssId: src.id, sheetName: src.sheet });
       }
     },
     mounted() {
