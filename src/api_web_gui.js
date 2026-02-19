@@ -16,6 +16,34 @@ function apiGetSources() {
   return readConfig();
 }
 
+/**
+ * 取得目前 Script Properties 設定狀態。
+ * 不依賴 getConfig()，即使尚未初始化也可呼叫。
+ */
+// eslint-disable-next-line no-unused-vars
+function apiGetProjectStatus() {
+  const props = PropertiesService.getScriptProperties().getProperties();
+  const configSsId = props['MAIN_CONFIG_SPREADSHEET_ID'] || '';
+  return {
+    isConfigured:     !!configSsId,
+    configSsId:       configSsId,
+    hasLineToken:     !!props['LINE_CHANNEL_ACCESS_TOKEN'],
+    hasReportsFolder: !!props['REPORTS_FOLDER_ID'],
+  };
+}
+
+/**
+ * 儲存初始化設定並寫入 Script Properties。
+ * 不依賴 getConfig()，即使尚未初始化也可呼叫。
+ * @param {Object} payload - { configSsId, lineToken?, reportsFolderId?, ... }
+ */
+// eslint-disable-next-line no-unused-vars
+function apiSetupProject(payload) {
+  const { configSsId, ...options } = payload || {};
+  if (!configSsId || !String(configSsId).trim()) return '❌ Config Spreadsheet ID 為必填';
+  return initializeProject(String(configSsId).trim(), options);
+}
+
 // ==========================================
 // 🟢 設定檔讀取介面 (Config Sheet版)
 // ==========================================

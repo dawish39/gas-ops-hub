@@ -73,27 +73,61 @@ function getConfig() {
   return CONFIG;
 }
 
-// Optional: Add a setup function to populate properties easily
+/**
+ * 初始化專案 Script Properties。
+ * 僅需傳入 Config Spreadsheet ID，其餘工作表名稱皆有預設值。
+ *
+ * 在 GAS 編輯器執行：
+ *   initializeProject('YOUR_CONFIG_SS_ID')
+ *   initializeProject('YOUR_CONFIG_SS_ID', { lineToken: 'xxx', reportsFolderId: 'yyy' })
+ *
+ * @param {string} configSsId - 主設定 Spreadsheet ID（必填）
+ * @param {Object} [options]  - 選填覆蓋值
+ * @param {string} [options.sheetConfig='Config']
+ * @param {string} [options.sheetEmail='Email']
+ * @param {string} [options.sheetCategoryCodeMap='CategoryCodeMap']
+ * @param {string} [options.sheetRepairCategory='RepairCategory']
+ * @param {string} [options.sheetNeedsCategory='NeedsCategory']
+ * @param {string} [options.lineToken]
+ * @param {string} [options.lineUsers]
+ * @param {string} [options.reportsFolderId]
+ * @param {string} [options.reportTemplateId]
+ * @returns {string} 執行結果
+ */
 // eslint-disable-next-line no-unused-vars
-function setInitialProperties() {
+function initializeProject(configSsId, options = {}) {
+  if (!configSsId) return '❌ 請提供 Config Spreadsheet ID（第一個參數）';
+
+  // 驗證 Spreadsheet 是否可存取
+  let ssName;
+  try {
+    ssName = SpreadsheetApp.openById(configSsId).getName();
+  } catch (e) {
+    return `❌ 無法開啟 Spreadsheet（ID: ${configSsId}）：${e.message}`;
+  }
+
   const properties = {
-    // 從 src/main.js, src/category_management.js 取得的初始值 (請注意：實際部署時應替換 ID)
-    [PROPERTY_KEYS.SPREADSHEET_ID]: '1CjNALBfP_n3LZ2hT5xE4XPbIe1q0P-UCgwgsY-aFEEU', 
-    [PROPERTY_KEYS.SHEET_LOG_ENTRIES]: 'LogEntries', 
-    [PROPERTY_KEYS.SHEET_CATEGORIES]: 'Categories', 
-    [PROPERTY_KEYS.SHEET_CONFIG]: 'Config',
-    [PROPERTY_KEYS.SHEET_EMAIL_SETTINGS]: 'Email',
-    [PROPERTY_KEYS.SHEET_CATEGORY_CODE_MAP]: 'CategoryCodeMap',
-    [PROPERTY_KEYS.SHEET_REPAIR_CATEGORY]: 'RepairCategory', // New
-    [PROPERTY_KEYS.SHEET_NEEDS_CATEGORY]: 'NeedsCategory',   // New
-    [PROPERTY_KEYS.REPORTS_FOLDER_ID]: '137ScpXsXsPFRArveytTsfzykW5H2bELA',
-    [PROPERTY_KEYS.REPORT_TEMPLATE_ID]: '153ZHVrDmrA1j1i0ElHYSGeBNZwMpINr47LpQxmp-KJg',
-    [PROPERTY_KEYS.GUI_CACHE_SS_ID]: 'GUI_CACHE_SS_ID_PLACEHOLDER', 
-    [PROPERTY_KEYS.ANALYSIS_SHEET_ID]: 'ANALYSIS_SHEET_ID_PLACEHOLDER', 
-    [PROPERTY_KEYS.COMPARISON_FOLDER_ID]: 'COMPARISON_FOLDER_ID_PLACEHOLDER', 
+    [PROPERTY_KEYS.SPREADSHEET_ID]:          configSsId,
+    [PROPERTY_KEYS.SHEET_CONFIG]:            options.sheetConfig          || 'Config',
+    [PROPERTY_KEYS.SHEET_EMAIL_SETTINGS]:    options.sheetEmail           || 'Email',
+    [PROPERTY_KEYS.SHEET_CATEGORY_CODE_MAP]: options.sheetCategoryCodeMap || 'CategoryCodeMap',
+    [PROPERTY_KEYS.SHEET_REPAIR_CATEGORY]:   options.sheetRepairCategory  || 'RepairCategory',
+    [PROPERTY_KEYS.SHEET_NEEDS_CATEGORY]:    options.sheetNeedsCategory   || 'NeedsCategory',
   };
-  
-  // Use ScriptProperties for deployment
+
+  if (options.lineToken)        properties['LINE_CHANNEL_ACCESS_TOKEN']      = options.lineToken;
+  if (options.lineUsers)        properties['LINE_ALLOWED_USERS']              = options.lineUsers;
+  if (options.reportsFolderId)  properties[PROPERTY_KEYS.REPORTS_FOLDER_ID]  = options.reportsFolderId;
+  if (options.reportTemplateId) properties[PROPERTY_KEYS.REPORT_TEMPLATE_ID] = options.reportTemplateId;
+
   PropertiesService.getScriptProperties().setProperties(properties);
-  Logger.log('Initial Script Properties set. **CRITICAL: Remember to replace ALL placeholder IDs and tokens**');
+
+  const log = [
+    `✅ Config Spreadsheet：「${ssName}」`,
+    `✅ 工作表：Config="${properties[PROPERTY_KEYS.SHEET_CONFIG]}", Email="${properties[PROPERTY_KEYS.SHEET_EMAIL_SETTINGS]}"`,
+    options.lineToken       ? '✅ LINE Token 已設定'     : '⚠️  LINE Token 未設定（LINE Bot 功能不可用，可稍後補設）',
+    options.reportsFolderId ? '✅ 報表資料夾已設定'       : '⚠️  報表資料夾未設定（報表功能不可用，可稍後補設）',
+  ];
+  Logger.log(['=== initializeProject 完成 ===', ...log].join('\n'));
+  return ['=== initializeProject 完成 ===', ...log, '', '請重新整理 Web GUI 以套用設定。'].join('\n');
 }

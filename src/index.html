@@ -461,6 +461,40 @@
             </div>
         </div>
         
+        <!-- 系統初始化設定 -->
+        <div class="mt-5 pt-4 border-top">
+          <h5 class="fw-bold text-secondary mb-3"><i class="bi bi-sliders me-2"></i>系統初始化設定</h5>
+          <div class="admin-card p-3">
+            <div class="alert alert-warning py-2 mb-3" v-if="!projectStatus.isConfigured">
+              <i class="bi bi-exclamation-triangle me-2"></i>尚未完成初始化，API 功能不可用。請填入 Config Spreadsheet ID 後儲存。
+            </div>
+            <div class="alert alert-success py-2 mb-3" v-if="projectStatus.isConfigured">
+              <i class="bi bi-check-circle me-2"></i>已初始化。Config ID：<code>{{ projectStatus.configSsId }}</code>
+              <span v-if="!projectStatus.hasLineToken" class="ms-3 text-warning"><i class="bi bi-exclamation-circle me-1"></i>LINE Token 未設定</span>
+            </div>
+            <div class="row g-2">
+              <div class="col-12">
+                <label class="form-label small fw-bold">Config Spreadsheet ID <span class="text-danger">*</span></label>
+                <input type="text" class="form-control form-control-sm font-monospace" v-model="setupForm.configSsId" placeholder="貼上 Google Spreadsheet ID">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small fw-bold">LINE Channel Access Token <span class="text-muted fw-normal">（選填）</span></label>
+                <input type="password" class="form-control form-control-sm" v-model="setupForm.lineToken" placeholder="若使用 LINE Bot 則填入">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small fw-bold">報表資料夾 ID <span class="text-muted fw-normal">（選填）</span></label>
+                <input type="text" class="form-control form-control-sm font-monospace" v-model="setupForm.reportsFolderId" placeholder="Google Drive 資料夾 ID">
+              </div>
+              <div class="col-12 mt-2">
+                <button class="btn btn-primary btn-sm" @click="saveSetup()">
+                  <i class="bi bi-save me-1"></i>儲存設定
+                </button>
+                <small class="text-muted ms-3">工作表名稱預設：Config / Email / RepairCategory / NeedsCategory / CategoryCodeMap</small>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div class="mt-5 pt-4 border-top">
            <h5 class="fw-bold text-secondary mb-3"><i class="bi bi-gear me-2"></i>系統維護與進階指令</h5>
            <div class="row">
@@ -779,6 +813,8 @@
         editModalInstance: null,
         editingTask: { uuid: '', source: '', item: '', category: '', dept: '', status: '', progress: '', link: '' },
         isCreating: false,
+        setupForm: { configSsId: '', lineToken: '', reportsFolderId: '' },
+        projectStatus: { isConfigured: false, configSsId: '', hasLineToken: false, hasReportsFolder: false },
         provisionType: 'repair',
         provisionName: '',
         createModalInstance: null,
@@ -1440,6 +1476,29 @@ initTrendChart(data) {
         google.script.run.withSuccessHandler(res => { this.stopLoading(); this.jobResult = res; new bootstrap.Modal(document.getElementById('resultModal')).show(); }).apiRunAdminJob(item.func, 'job');
       },
 
+      saveSetup() {
+        if (!this.setupForm.configSsId.trim()) { alert('請填入 Config Spreadsheet ID'); return; }
+        this.startLoading('儲存設定中...');
+        google.script.run
+          .withSuccessHandler(res => {
+            this.stopLoading();
+            this.jobResult = res;
+            new bootstrap.Modal(document.getElementById('resultModal')).show();
+            // 設定完成後重新載入狀態與資料來源
+            google.script.run.withSuccessHandler(s => {
+              this.projectStatus = s;
+              if (s.configSsId) this.setupForm.configSsId = s.configSsId;
+            }).apiGetProjectStatus();
+            google.script.run.withSuccessHandler(s => { if (Array.isArray(s)) this.sources = s; }).apiGetSources();
+          })
+          .withFailureHandler(err => {
+            this.stopLoading();
+            this.jobResult = '❌ ' + err.message;
+            new bootstrap.Modal(document.getElementById('resultModal')).show();
+          })
+          .apiSetupProject(this.setupForm);
+      },
+
       provisionNewSource() {
         const name = this.provisionName.trim() || `IT Log - ${this.provisionType}`;
         if (!confirm(`建立新的「${this.provisionType}」來源「${name}」？\n\n這會在你的 Google Drive 建立一個新的 Spreadsheet。`)) return;
@@ -1479,6 +1538,13 @@ initTrendChart(data) {
     },
     mounted() {
       this.debouncedFetchTrendData = this.debounce(this.fetchTrendData, 300);
+      // 查詢設定狀態（不依賴 getConfig，即使未初始化也不會失敗）
+      google.script.run
+        .withSuccessHandler(s => {
+          this.projectStatus = s;
+          if (s.configSsId) this.setupForm.configSsId = s.configSsId;
+        })
+        .apiGetProjectStatus();
       this.init();
       this.startPolling();
       // ChartJS plugins are registered globally, so we only need to do this once.
