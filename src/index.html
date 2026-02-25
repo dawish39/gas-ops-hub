@@ -1150,14 +1150,15 @@ initTrendChart(data) {
         this.logs = [];
         const target = this.sources[idx];
         
-        google.script.run.withSuccessHandler(res => {
-          const sourceName = this.sources[idx].name;
-          res.data.forEach(row => {
-            row.source = sourceName;
-          });
-          this.logs = res.data;
-          this.stopLoading();
-        }).apiGetSheetData(target.id, target.sheet);
+        google.script.run
+          .withSuccessHandler(res => {
+            const sourceName = this.sources[idx].name;
+            res.data.forEach(row => { row.source = sourceName; });
+            this.logs = res.data;
+            this.stopLoading();
+          })
+          .withFailureHandler(() => { this.stopLoading(); })
+          .apiGetSheetData(target.id, target.sheet);
       },
       
       toggleTodoMode(isChecked) {
@@ -1189,11 +1190,17 @@ initTrendChart(data) {
         this.dashboardLoading = true; 
         if (!silent) this.startLoading('儀表板載入中...');
         
-        google.script.run.withSuccessHandler(res => { 
-          this.hudData = res; 
-          this.dashboardLoading = false; 
-          this.stopLoading(); 
-        }).apiGetGlobalSummary();
+        google.script.run
+          .withSuccessHandler(res => {
+            this.hudData = res;
+            this.dashboardLoading = false;
+            this.stopLoading();
+          })
+          .withFailureHandler(() => {
+            this.dashboardLoading = false;
+            this.stopLoading();
+          })
+          .apiGetGlobalSummary();
       },
 
       startPolling() {
@@ -1473,7 +1480,10 @@ initTrendChart(data) {
       runMaintenance(item) {
         if (!confirm(`執行「${item.label}」？`)) return;
         this.startLoading(`執行中：${item.label}...`);
-        google.script.run.withSuccessHandler(res => { this.stopLoading(); this.jobResult = res; new bootstrap.Modal(document.getElementById('resultModal')).show(); }).apiRunAdminJob(item.func, 'job');
+        google.script.run
+          .withSuccessHandler(res => { this.stopLoading(); this.jobResult = res; new bootstrap.Modal(document.getElementById('resultModal')).show(); })
+          .withFailureHandler(err => { this.stopLoading(); this.jobResult = '❌ ' + err.message; new bootstrap.Modal(document.getElementById('resultModal')).show(); })
+          .apiRunAdminJob(item.func, 'job');
       },
 
       saveSetup() {
