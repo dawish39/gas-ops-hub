@@ -670,6 +670,16 @@
   }
 
   /**
+   * 測試：initializeProject 資料夾初始化
+   */
+  function testInitializeProject() {
+    const result = initializeProject("YOUR_CONFIG_SS_ID", {
+      rootFolderId: "YOUR_ROOT_FOLDER_ID"
+    });
+    Logger.log(JSON.stringify(result));
+  }
+
+  /**
    * 測試：檢查環境設定
    */
   function 檢查環境設定() {

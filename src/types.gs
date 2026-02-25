@@ -66,7 +66,8 @@
 // │ ANALYSIS_SHEET_ID                │ PROPERTY_KEYS.ANALYSIS_SHEET_ID      │ （未設定則由 analytics 建立新 SS）    │ analytics.outputStatsToSheet()      │
 // │                                  │                                      │                                      │ analytics.writeToAnalysisSheet()    │
 // ├──────────────────────────────────┼──────────────────────────────────────┼──────────────────────────────────────┼────────────────────────────────────┤
-// │ COMPARISON_FOLDER_ID             │ PROPERTY_KEYS.COMPARISON_FOLDER_ID   │ （手動設定）                         │ analytics.exportComparisonStats()   │
+// │ COMPARISON_FOLDER_ID             │ PROPERTY_KEYS.COMPARISON_FOLDER_ID   │ initializeProject()                  │ analytics.exportComparisonStats()   │
+// │                                  │                                      │ （rootFolderId 資料夾初始化）         │                                     │
 // ├──────────────────────────────────┼──────────────────────────────────────┼──────────────────────────────────────┼────────────────────────────────────┤
 // │  ── 未收錄進 PROPERTY_KEYS 的 raw key ──                                                                                                            │
 // ├──────────────────────────────────┬──────────────────────────────────────┬──────────────────────────────────────┬────────────────────────────────────┤
@@ -91,14 +92,9 @@
 // ├──────────────────────────────────┼──────────────────────────────────────┼──────────────────────────────────────┼────────────────────────────────────┤
 // │ ⚠️ SHEET_LOG_ENTRIES              │ PROPERTY_KEYS.SHEET_LOG_ENTRIES      │ （未使用——已定義但無讀寫呼叫）        │ ——                                 │
 // │ ⚠️ SHEET_CATEGORIES              │ PROPERTY_KEYS.SHEET_CATEGORIES       │ （未使用——已定義但無讀寫呼叫）        │ ——                                 │
-// │ ⚠️ NEEDS_FOLDER_ID               │ PROPERTY_KEYS.NEEDS_FOLDER_ID        │ ❌ 未定義於 PROPERTY_KEYS！            │ analytics.createNewStatsSheet()     │
-// │                                  │                                      │    CONFIG.get(undefined) → null      │ analytics.outputCategoryStatsToSheet│
+// │ NEEDS_FOLDER_ID                  │ PROPERTY_KEYS.NEEDS_FOLDER_ID        │ initializeProject()                  │ analytics.createNewStatsSheet()     │
+// │                                  │                                      │ （rootFolderId 資料夾初始化）         │ analytics.outputCategoryStatsToSheet│
 // └──────────────────────────────────┴──────────────────────────────────────┴──────────────────────────────────────┴────────────────────────────────────┘
-//
-// ⚠️ 已知缺陷：PROPERTY_KEYS 中沒有定義 NEEDS_FOLDER_ID，
-//    但 analytics.js 的兩個函式呼叫 CONFIG.get(PROPERTY_KEYS.NEEDS_FOLDER_ID)，
-//    因為 PROPERTY_KEYS.NEEDS_FOLDER_ID === undefined，get(undefined) 會回傳 null，
-//    導致需求統計報表永遠存在根目錄而不會移至指定資料夾。
 
 
 // =============================================================================
