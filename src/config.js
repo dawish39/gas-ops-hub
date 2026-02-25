@@ -80,7 +80,7 @@ function getConfig() {
  *
  * 在 GAS 編輯器執行：
  *   initializeProject('YOUR_CONFIG_SS_ID')
- *   initializeProject('YOUR_CONFIG_SS_ID', { lineToken: 'xxx', reportsFolderId: 'yyy' })
+ *   initializeProject('YOUR_CONFIG_SS_ID', { lineToken: 'xxx' })
  *   initializeProject('YOUR_CONFIG_SS_ID', { rootFolderId: 'EXISTING_FOLDER_ID' })
  *   initializeProject('YOUR_CONFIG_SS_ID', { rootFolderId: '' })  // 自動建立根資料夾
  *
@@ -100,7 +100,6 @@ function getConfig() {
  * @param {string} [options.sheetNeedsCategory='NeedsCategory']
  * @param {string} [options.lineToken]
  * @param {string} [options.lineUsers]
- * @param {string} [options.reportsFolderId]
  * @param {string} [options.reportTemplateId]
  * @param {string} [options.rootFolderId] - 傳入此參數以啟用資料夾初始化。
  *   有效 Drive 資料夾 ID → 使用現有資料夾；空字串 → 自動建立新資料夾。
@@ -131,7 +130,6 @@ function initializeProject(configSsId, options = {}) {
 
   if (options.lineToken)        properties['LINE_CHANNEL_ACCESS_TOKEN']      = options.lineToken;
   if (options.lineUsers)        properties['LINE_ALLOWED_USERS']              = options.lineUsers;
-  if (options.reportsFolderId)  properties[PROPERTY_KEYS.REPORTS_FOLDER_ID]  = options.reportsFolderId;
   if (options.reportTemplateId) properties[PROPERTY_KEYS.REPORT_TEMPLATE_ID] = options.reportTemplateId;
 
   // ── 資料夾初始化（options.rootFolderId 存在於 options 時啟用）──────────────
@@ -180,7 +178,7 @@ function initializeProject(configSsId, options = {}) {
     `✅ 工作表：Config="${properties[PROPERTY_KEYS.SHEET_CONFIG]}", Email="${properties[PROPERTY_KEYS.SHEET_EMAIL_SETTINGS]}"`,
     options.lineToken ? '✅ LINE Token 已設定' : '⚠️  LINE Token 未設定（LINE Bot 功能不可用，可稍後補設）',
     folderResult      ? `✅ 資料夾結構已初始化（root: ${folderResult.rootFolderId}）`
-                      : (options.reportsFolderId ? '✅ 報表資料夾已設定' : '⚠️  報表資料夾未設定（報表功能不可用，可稍後補設）'),
+                      : '⚠️  報表資料夾未設定（報表功能不可用，請傳入 rootFolderId 以初始化）',
   ];
   Logger.log(['=== initializeProject 完成 ===', ...log].join('\n'));
 

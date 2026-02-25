@@ -481,9 +481,9 @@
                 <label class="form-label small fw-bold">LINE Channel Access Token <span class="text-muted fw-normal">（選填）</span></label>
                 <input type="password" class="form-control form-control-sm" v-model="setupForm.lineToken" placeholder="若使用 LINE Bot 則填入">
               </div>
-              <div class="col-md-6">
-                <label class="form-label small fw-bold">報表資料夾 ID <span class="text-muted fw-normal">（選填）</span></label>
-                <input type="text" class="form-control form-control-sm font-monospace" v-model="setupForm.reportsFolderId" placeholder="Google Drive 資料夾 ID">
+              <div class="col-12">
+                <label class="form-label small fw-bold">專案根目錄 ID <span class="text-muted fw-normal">（選填）留空則自動在 Drive 根目錄建立 gas-ops-hub-project</span></label>
+                <input type="text" class="form-control form-control-sm font-monospace" v-model="setupForm.rootFolderId" placeholder="貼上 Google Drive 資料夾 ID">
               </div>
               <div class="col-12 mt-2">
                 <button class="btn btn-primary btn-sm" @click="saveSetup()">
@@ -813,7 +813,7 @@
         editModalInstance: null,
         editingTask: { uuid: '', source: '', item: '', category: '', dept: '', status: '', progress: '', link: '' },
         isCreating: false,
-        setupForm: { configSsId: '', lineToken: '', reportsFolderId: '' },
+        setupForm: { configSsId: '', lineToken: '', rootFolderId: '' },
         projectStatus: { isConfigured: false, configSsId: '', hasLineToken: false, hasReportsFolder: false },
         provisionType: 'repair',
         provisionName: '',
