@@ -1492,7 +1492,9 @@ initTrendChart(data) {
         google.script.run
           .withSuccessHandler(res => {
             this.stopLoading();
-            this.jobResult = res;
+            this.jobResult = (res && res.success === true)
+              ? `✅ 資料夾結構已初始化\n根目錄：${res.rootFolderId}\nReports：${res.folders.reports}\nAnalytics：${res.folders.analytics}`
+              : res;
             new bootstrap.Modal(document.getElementById('resultModal')).show();
             // 設定完成後重新載入狀態與資料來源
             google.script.run.withSuccessHandler(s => {
