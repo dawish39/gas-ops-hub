@@ -142,6 +142,13 @@ function provisionSource(type, name) {
     log.push(`✅ 建立 Spreadsheet: "${sourceName}"`);
     log.push(`   ID: ${newSsId}`);
 
+    // ── Step 1b：移動到 1_DataSources 資料夾 ────────────────
+    const dataSourcesFolderId = getConfig().get(PROPERTY_KEYS.DATA_SOURCES_FOLDER_ID);
+    if (dataSourcesFolderId) {
+      DriveApp.getFileById(newSsId).moveTo(DriveApp.getFolderById(dataSourcesFolderId));
+      log.push(`✅ 已移動至 1_DataSources 資料夾`);
+    }
+
     // ── Step 2：設定主要工作表 ──────────────────────────────
     const logSheet = newSs.getSheets()[0];
     logSheet.setName(schema.logSheetName);

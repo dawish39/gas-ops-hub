@@ -829,17 +829,25 @@
       currentSourceName() { return this.sources.length === 0 ? "載入中..." : this.sources[this.currentSourceIdx].name; },
       
       activeItemList() {
-       const src = this.creatingTask.sourceName || "";
-       if (src.includes("需求")) return this.formOptions.needsItems;
-       if (src.includes("報修") || src.includes("資訊") || src.includes("Project")) return this.formOptions.repairItems;
-       return this.formOptions.repairItems;
-     },
-     activeItemListForEdit() {
-       const src = this.editingTask.source || "";
-       if (src.includes("需求")) return this.formOptions.needsItems;
-       if (src.includes("報修") || src.includes("資訊") || src.includes("Project")) return this.formOptions.repairItems;
-       return this.formOptions.repairItems;
-     },
+        const src = this.sources.find(s => s.name === this.creatingTask.sourceName) || {};
+        const type = String(src.type || "").trim().toLowerCase();
+        if (type === "needs") return this.formOptions.needsItems;
+        if (type === "repair") return this.formOptions.repairItems;
+        // 名稱備援（type 未設定的舊資料相容）
+        const name = this.creatingTask.sourceName || "";
+        if (name.includes("需求")) return this.formOptions.needsItems;
+        return this.formOptions.repairItems;
+      },
+      activeItemListForEdit() {
+        const src = this.sources.find(s => s.name === this.editingTask.source) || {};
+        const type = String(src.type || "").trim().toLowerCase();
+        if (type === "needs") return this.formOptions.needsItems;
+        if (type === "repair") return this.formOptions.repairItems;
+        // 名稱備援（type 未設定的舊資料相容）
+        const name = this.editingTask.source || "";
+        if (name.includes("需求")) return this.formOptions.needsItems;
+        return this.formOptions.repairItems;
+      },
       showDeptInput() {
         const src = this.creatingTask.sourceName || "";
         if (src.includes("工作") || (src.includes("資訊") && src.includes("進度"))) return false;

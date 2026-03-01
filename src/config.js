@@ -17,6 +17,7 @@ const PROPERTY_KEYS = {
   SHEET_NEEDS_CATEGORY: 'SHEET_NEEDS_CATEGORY_NAME',   // New: NeedsCategory
 
   REPORTS_FOLDER_ID: 'REPORTS_FOLDER_ID',
+  DATA_SOURCES_FOLDER_ID: 'DATA_SOURCES_FOLDER_ID', // 資料來源資料夾（1_DataSources）
   NEEDS_FOLDER_ID: 'NEEDS_FOLDER_ID',       // 需求統計報表資料夾（3_Analytics）
   REPORT_TEMPLATE_ID: 'REPORT_TEMPLATE_ID',
   
@@ -183,13 +184,15 @@ function initializeProject(configSsId, options = {}) {
     } catch (e) {
       return `❌ ${e.message}`;
     }
-    properties[PROPERTY_KEYS.REPORTS_FOLDER_ID]    = folderResult.folders.reports;
-    properties[PROPERTY_KEYS.NEEDS_FOLDER_ID]      = folderResult.folders.analytics;
-    properties[PROPERTY_KEYS.COMPARISON_FOLDER_ID] = folderResult.folders.analytics;
+    properties[PROPERTY_KEYS.REPORTS_FOLDER_ID]       = folderResult.folders.reports;
+    properties[PROPERTY_KEYS.DATA_SOURCES_FOLDER_ID]  = folderResult.folders.dataSources;
+    properties[PROPERTY_KEYS.NEEDS_FOLDER_ID]          = folderResult.folders.analytics;
+    properties[PROPERTY_KEYS.COMPARISON_FOLDER_ID]     = folderResult.folders.analytics;
   } else {
-    if (options.reportsFolderIdOverride)    properties[PROPERTY_KEYS.REPORTS_FOLDER_ID]    = options.reportsFolderIdOverride;
-    if (options.needsFolderIdOverride)      properties[PROPERTY_KEYS.NEEDS_FOLDER_ID]      = options.needsFolderIdOverride;
-    if (options.comparisonFolderIdOverride) properties[PROPERTY_KEYS.COMPARISON_FOLDER_ID] = options.comparisonFolderIdOverride;
+    if (options.reportsFolderIdOverride)      properties[PROPERTY_KEYS.REPORTS_FOLDER_ID]       = options.reportsFolderIdOverride;
+    if (options.dataSourcesFolderIdOverride)  properties[PROPERTY_KEYS.DATA_SOURCES_FOLDER_ID]  = options.dataSourcesFolderIdOverride;
+    if (options.needsFolderIdOverride)        properties[PROPERTY_KEYS.NEEDS_FOLDER_ID]          = options.needsFolderIdOverride;
+    if (options.comparisonFolderIdOverride)   properties[PROPERTY_KEYS.COMPARISON_FOLDER_ID]     = options.comparisonFolderIdOverride;
   }
 
   PropertiesService.getScriptProperties().setProperties(properties);
