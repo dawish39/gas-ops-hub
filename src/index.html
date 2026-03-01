@@ -727,18 +727,18 @@
     </div>
   </div>
 
-  <div class="modal fade" id="resultModal" tabindex="-1">
+  <div class="modal fade" id="resultModal" tabindex="-1" data-bs-backdrop="static">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
         <div class="modal-header bg-success text-white">
           <h5 class="modal-title">執行成功</h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" @click="handleModalClose"></button>
         </div>
         <div class="modal-body p-4 text-center fs-5">
           {{ jobResult }}
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">關閉</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" @click="handleModalClose">關閉</button>
         </div>
       </div>
     </div>
@@ -1275,6 +1275,11 @@ initTrendChart(data) {
       getStatusClass(s) { return this.getBadgeClass(s); },
       startLoading(text) { this.loading = true; this.loadingText = text; },
       stopLoading() { this.loading = false; },
+      handleModalClose() {
+        if (this.reloadOnModalClose) {
+          window.location.reload();
+        }
+      },
 
       openModal(task) {
         if (!task.uuid) { alert("UUID 失效"); return; }
@@ -1630,15 +1635,6 @@ initTrendChart(data) {
     },
     mounted() {
       this.debouncedFetchTrendData = this.debounce(this.fetchTrendData, 300);
-      const resultModalEl = document.getElementById('resultModal');
-      if (resultModalEl) {
-        resultModalEl.addEventListener('hidden.bs.modal', () => {
-          if (this.reloadOnModalClose) {
-            this.reloadOnModalClose = false;
-            window.location.reload();
-          }
-        });
-      }
       // 查詢設定狀態（不依賴 getConfig，即使未初始化也不會失敗）
       google.script.run
         .withSuccessHandler(s => {
