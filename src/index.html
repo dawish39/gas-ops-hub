@@ -1234,7 +1234,21 @@ initTrendChart(data) {
         }, 30000); 
       },
 
-      getColor(name) { if (!name) return 'gray'; const n = name.toLowerCase(); if (n.includes('需求')) return 'purple'; if (n.includes('資訊')) return 'green'; if (n.includes('報修')) return 'blue'; return 'gray'; },
+      getColor(name) {
+        const src = this.sources.find(s => s.name === name) || {};
+        const type = String(src.type || "").trim().toLowerCase();
+        if (type === "repair") return "blue";
+        if (type === "needs")  return "purple";
+        if (type === "daily")  return "green";
+        if (type) return "gray";
+        // 名稱備援（type 未設定的舊資料相容）
+        if (!name) return "gray";
+        const n = name.toLowerCase();
+        if (n.includes("需求")) return "purple";
+        if (n.includes("資訊")) return "green";
+        if (n.includes("報修")) return "blue";
+        return "gray";
+      },
       getBadgeClass(s) {
         if (!s) return 'bg-secondary bg-opacity-10 text-secondary border-secondary';
         if (s.includes('?') || s.includes('待確認')) return 'bg-danger bg-opacity-10 text-danger border-danger';
@@ -1247,8 +1261,9 @@ initTrendChart(data) {
       getModalHeaderColor() {
         const src = this.sources.find(s => s.name === this.editingTask.source) || {};
         const type = String(src.type || "").trim().toLowerCase();
-        if (type === "needs") return "purple";
-        if (type === "repair") return "success";
+        if (type === "repair") return "primary";
+        if (type === "needs")  return "purple";
+        if (type === "daily")  return "success";
         if (type) return "dark";
         // 名稱備援（type 未設定的舊資料相容）
         const s = this.editingTask.source || "";
