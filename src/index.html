@@ -1642,11 +1642,12 @@ initTrendChart(data) {
           if (s.configSsId) this.setupForm.configSsId = s.configSsId;
           if (!s.isConfigured) {
             this.currentView = 'setup';
+          } else {
+            this.init();
+            this.startPolling();
           }
         })
         .apiGetProjectStatus();
-      this.init();
-      this.startPolling();
       // ChartJS plugins are registered globally, so we only need to do this once.
       Chart.register(ChartDataLabels);
     }
