@@ -44,6 +44,48 @@ function apiSetupProject(payload) {
   return initializeProject(String(configSsId).trim(), options);
 }
 
+/**
+ * 一鍵完成完整初始化流程：
+ * 建立資料夾結構 → 建立 Config 試算表 → 寫入 Script Properties。
+ *
+ * @param {Object} payload
+ * @param {string} payload.rootFolderId - 根資料夾 ID；空字串則自動建立新資料夾
+ * @param {string} [payload.lineToken]  - LINE Channel Access Token（選填）
+ * @returns {{ success: true, ssId: string, ssName: string, rootFolderId: string }
+ *          | { success: false, error: string }}
+ */
+// eslint-disable-next-line no-unused-vars
+function apiProvisionAndSetup(payload) {
+  try {
+    // 1. 建立資料夾結構
+    const folderResult = _initFolders((payload || {}).rootFolderId || '');
+
+    // 2. 在 0_Config 資料夾內建立 Config 試算表
+    const provisionResult = provisionConfigSs({ folderId: folderResult.folders.config });
+    if (provisionResult.success !== true) {
+      throw new Error(provisionResult.error || 'Config 試算表建立失敗');
+    }
+
+    // 3. 寫入 Script Properties
+    initializeProject(provisionResult.ssId, {
+      lineToken:                (payload || {}).lineToken,
+      reportsFolderIdOverride:  folderResult.folders.reports,
+      needsFolderIdOverride:    folderResult.folders.analytics,
+      comparisonFolderIdOverride: folderResult.folders.analytics,
+    });
+
+    // 4. 回傳結構化結果
+    return {
+      success:      true,
+      ssId:         provisionResult.ssId,
+      ssName:       provisionResult.ssName,
+      rootFolderId: folderResult.rootFolderId,
+    };
+  } catch (e) {
+    return { success: false, error: e.message };
+  }
+}
+
 // ==========================================
 // 🟢 設定檔讀取介面 (Config Sheet版)
 // ==========================================

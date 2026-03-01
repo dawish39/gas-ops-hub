@@ -75,6 +75,46 @@ function getConfig() {
 }
 
 /**
+ * 初始化 Drive 資料夾結構，確保四個子資料夾存在。
+ *
+ * @param {string} rootFolderId - 現有根資料夾 ID；空字串則自動建立 'gas-ops-hub-project'
+ * @returns {{ rootFolderId: string, folders: { config: string, dataSources: string, reports: string, analytics: string } }}
+ * @throws {Error} 若 rootFolderId 有值但無法開啟時拋出
+ */
+function _initFolders(rootFolderId) {
+  let rootFolder;
+  if (rootFolderId) {
+    try {
+      rootFolder = DriveApp.getFolderById(rootFolderId);
+    } catch (e) {
+      throw new Error('無法開啟根資料夾：' + e.message);
+    }
+  } else {
+    rootFolder = DriveApp.createFolder('gas-ops-hub-project');
+  }
+
+  const getOrCreate = (parent, name) => {
+    const iter = parent.getFoldersByName(name);
+    return iter.hasNext() ? iter.next() : parent.createFolder(name);
+  };
+
+  const configFolder      = getOrCreate(rootFolder, '0_Config');
+  const dataSourcesFolder = getOrCreate(rootFolder, '1_DataSources');
+  const reportsFolder     = getOrCreate(rootFolder, '2_Reports');
+  const analyticsFolder   = getOrCreate(rootFolder, '3_Analytics');
+
+  return {
+    rootFolderId: rootFolder.getId(),
+    folders: {
+      config:      configFolder.getId(),
+      dataSources: dataSourcesFolder.getId(),
+      reports:     reportsFolder.getId(),
+      analytics:   analyticsFolder.getId(),
+    },
+  };
+}
+
+/**
  * 初始化專案 Script Properties。
  * 僅需傳入 Config Spreadsheet ID，其餘工作表名稱皆有預設值。
  *
@@ -103,6 +143,9 @@ function getConfig() {
  * @param {string} [options.reportTemplateId]
  * @param {string} [options.rootFolderId] - 傳入此參數以啟用資料夾初始化。
  *   有效 Drive 資料夾 ID → 使用現有資料夾；空字串 → 自動建立新資料夾。
+ * @param {string} [options.reportsFolderIdOverride]    - 直接指定 REPORTS_FOLDER_ID（不呼叫 _initFolders）
+ * @param {string} [options.needsFolderIdOverride]      - 直接指定 NEEDS_FOLDER_ID
+ * @param {string} [options.comparisonFolderIdOverride] - 直接指定 COMPARISON_FOLDER_ID
  * @returns {string|{success: boolean, rootFolderId: string, folders: {config: string, dataSources: string, reports: string, analytics: string}}}
  *   未傳入 rootFolderId 時回傳執行結果字串；
  *   傳入 rootFolderId 時回傳結構化物件。
@@ -132,43 +175,21 @@ function initializeProject(configSsId, options = {}) {
   if (options.lineUsers)        properties['LINE_ALLOWED_USERS']              = options.lineUsers;
   if (options.reportTemplateId) properties[PROPERTY_KEYS.REPORT_TEMPLATE_ID] = options.reportTemplateId;
 
-  // ── 資料夾初始化（options.rootFolderId 存在於 options 時啟用）──────────────
+  // ── 資料夾初始化 ──────────────────────────────────────────────────────────
   let folderResult = null;
   if ('rootFolderId' in options) {
-    let rootFolder;
-    if (options.rootFolderId) {
-      try {
-        rootFolder = DriveApp.getFolderById(options.rootFolderId);
-      } catch (e) {
-        return `❌ 無法開啟根資料夾（ID: ${options.rootFolderId}）：${e.message}`;
-      }
-    } else {
-      rootFolder = DriveApp.createFolder('gas-ops-hub-project');
+    try {
+      folderResult = _initFolders(options.rootFolderId);
+    } catch (e) {
+      return `❌ ${e.message}`;
     }
-
-    const getOrCreate = (parent, name) => {
-      const iter = parent.getFoldersByName(name);
-      return iter.hasNext() ? iter.next() : parent.createFolder(name);
-    };
-
-    const configFolder      = getOrCreate(rootFolder, '0_Config');
-    const dataSourcesFolder = getOrCreate(rootFolder, '1_DataSources');
-    const reportsFolder     = getOrCreate(rootFolder, '2_Reports');
-    const analyticsFolder   = getOrCreate(rootFolder, '3_Analytics');
-
-    properties[PROPERTY_KEYS.REPORTS_FOLDER_ID]    = reportsFolder.getId();
-    properties[PROPERTY_KEYS.NEEDS_FOLDER_ID]      = analyticsFolder.getId();
-    properties[PROPERTY_KEYS.COMPARISON_FOLDER_ID] = analyticsFolder.getId();
-
-    folderResult = {
-      rootFolderId: rootFolder.getId(),
-      folders: {
-        config:      configFolder.getId(),
-        dataSources: dataSourcesFolder.getId(),
-        reports:     reportsFolder.getId(),
-        analytics:   analyticsFolder.getId()
-      }
-    };
+    properties[PROPERTY_KEYS.REPORTS_FOLDER_ID]    = folderResult.folders.reports;
+    properties[PROPERTY_KEYS.NEEDS_FOLDER_ID]      = folderResult.folders.analytics;
+    properties[PROPERTY_KEYS.COMPARISON_FOLDER_ID] = folderResult.folders.analytics;
+  } else {
+    if (options.reportsFolderIdOverride)    properties[PROPERTY_KEYS.REPORTS_FOLDER_ID]    = options.reportsFolderIdOverride;
+    if (options.needsFolderIdOverride)      properties[PROPERTY_KEYS.NEEDS_FOLDER_ID]      = options.needsFolderIdOverride;
+    if (options.comparisonFolderIdOverride) properties[PROPERTY_KEYS.COMPARISON_FOLDER_ID] = options.comparisonFolderIdOverride;
   }
 
   PropertiesService.getScriptProperties().setProperties(properties);
