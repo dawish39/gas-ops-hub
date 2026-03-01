@@ -75,11 +75,12 @@ function apiProvisionAndSetup(payload) {
 
     // 3. 寫入 Script Properties
     initializeProject(provisionResult.ssId, {
-      lineToken:                    (payload || {}).lineToken,
-      reportsFolderIdOverride:      folderResult.folders.reports,
-      dataSourcesFolderIdOverride:  folderResult.folders.dataSources,
-      needsFolderIdOverride:        folderResult.folders.analytics,
-      comparisonFolderIdOverride:   folderResult.folders.analytics,
+      lineToken:                   (payload || {}).lineToken,
+      reportTemplateId:            provisionResult.templateId,
+      reportsFolderIdOverride:     folderResult.folders.reports,
+      dataSourcesFolderIdOverride: folderResult.folders.dataSources,
+      needsFolderIdOverride:       folderResult.folders.analytics,
+      comparisonFolderIdOverride:  folderResult.folders.analytics,
     });
 
     // 4. 回傳結構化結果

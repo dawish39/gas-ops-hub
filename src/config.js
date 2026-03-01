@@ -316,12 +316,39 @@ function provisionConfigSs(options = {}) {
       ['702', 'SOP 文件化', '流程優化', 'Y', '2026-01-01', ''],
     ]);
 
-    // 6. 回傳結構化結果
+    // 6. 建立日報 Google Doc 模板
+    const templateName = (options.ssName || 'gas-ops-hub-config') + '-report-template';
+    const doc = DocumentApp.create(templateName);
+    const body = doc.getBody();
+
+    const title = body.appendParagraph('資訊部日報 -  {{DATE_FULL}}');
+    title.editAsText().setFontSize(18);
+    body.appendParagraph('{{REPORT_CONTENT}}');
+    body.appendParagraph('');
+    body.appendParagraph('');
+
+    // 簽核表格（1 列 6 欄：label + 空白欄交錯）
+    const table = body.appendTable();
+    const row = table.appendTableRow();
+    const labels = ['填表人員', '單位主管', '部門主管'];
+    labels.forEach(label => {
+      row.appendTableCell(label);
+      row.appendTableCell(' ');
+    });
+
+    if (options.folderId) {
+      DriveApp.getFileById(doc.getId())
+        .moveTo(DriveApp.getFolderById(options.folderId));
+    }
+    doc.saveAndClose();
+
+    // 7. 回傳結構化結果
     return {
-      success: true,
-      ssId:    ss.getId(),
-      ssName:  ss.getName(),
-      ssUrl:   ss.getUrl(),
+      success:    true,
+      ssId:       ss.getId(),
+      ssName:     ss.getName(),
+      ssUrl:      ss.getUrl(),
+      templateId: doc.getId(),
     };
 
   } catch (e) {
