@@ -159,6 +159,14 @@ function apiGetAdminMenu() {
   return getAdminMenuConfig();
 }
 
+// eslint-disable-next-line no-unused-vars
+function getScriptURL() {
+  const url = ScriptApp.getService().getUrl();
+  PropertiesService.getScriptProperties()
+    .setProperty(PROPERTY_KEYS.WEB_APP_URL, url);
+  return url;
+}
+
 /**
  * 建立一個全新的資料來源 Spreadsheet。
  * @param {{ type: string, name: string }} payload

@@ -1277,7 +1277,9 @@ initTrendChart(data) {
       stopLoading() { this.loading = false; },
       handleModalClose() {
         if (this.reloadOnModalClose) {
-          window.location.reload();
+          google.script.run
+            .withSuccessHandler(url => window.top.location.replace(url))
+            .getScriptURL();
         }
       },
 
