@@ -775,6 +775,7 @@
         trendChartShowLabels: true, // 控制趨勢圖資料標籤
         trendChartSource: '_ALL_', // 趨勢圖的資料來源篩選器
         debouncedFetchTrendData: null,
+        reloadOnModalClose: false,
         sources: [],
         currentSourceIdx: 0,
         logs: [],
@@ -1542,8 +1543,8 @@ initTrendChart(data) {
             this.stopLoading();
             if (res && res.success === true) {
               this.jobResult = `✅ 資料夾結構已初始化\n根目錄：${res.rootFolderId}\nReports：${res.folders.reports}\nAnalytics：${res.folders.analytics}`;
+              this.reloadOnModalClose = true;
               new bootstrap.Modal(document.getElementById('resultModal')).show();
-              setTimeout(() => window.location.reload(), 1500);
             } else {
               this.jobResult = res;
               new bootstrap.Modal(document.getElementById('resultModal')).show();
@@ -1574,10 +1575,10 @@ initTrendChart(data) {
             } else {
               this.jobResult = '❌ ' + (res.error || '初始化失敗');
             }
-            new bootstrap.Modal(document.getElementById('resultModal')).show();
             if (res && res.success === true) {
-              setTimeout(() => window.location.reload(), 1500);
+              this.reloadOnModalClose = true;
             }
+            new bootstrap.Modal(document.getElementById('resultModal')).show();
           })
           .withFailureHandler(err => {
             this.stopLoading();
@@ -1629,6 +1630,15 @@ initTrendChart(data) {
     },
     mounted() {
       this.debouncedFetchTrendData = this.debounce(this.fetchTrendData, 300);
+      const resultModalEl = document.getElementById('resultModal');
+      if (resultModalEl) {
+        resultModalEl.addEventListener('hidden.bs.modal', () => {
+          if (this.reloadOnModalClose) {
+            this.reloadOnModalClose = false;
+            window.location.reload();
+          }
+        });
+      }
       // 查詢設定狀態（不依賴 getConfig，即使未初始化也不會失敗）
       google.script.run
         .withSuccessHandler(s => {
