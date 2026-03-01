@@ -849,16 +849,26 @@
         return this.formOptions.repairItems;
       },
       showDeptInput() {
-        const src = this.creatingTask.sourceName || "";
-        if (src.includes("工作") || (src.includes("資訊") && src.includes("進度"))) return false;
+        const src = this.sources.find(s => s.name === this.creatingTask.sourceName) || {};
+        const type = String(src.type || "").trim().toLowerCase();
+        if (type === "repair" || type === "needs") return true;
+        if (type) return false;
+        // 名稱備援（type 未設定的舊資料相容）
+        const name = this.creatingTask.sourceName || "";
+        if (name.includes("工作") || (name.includes("資訊") && name.includes("進度"))) return false;
         return true;
       },
 
-     showDeptInputForEdit() {
-       const src = this.editingTask.source || "";
-       if (src.includes("工作") || (src.includes("資訊") && src.includes("進度"))) return false;
-       return true;
-     },
+      showDeptInputForEdit() {
+        const src = this.sources.find(s => s.name === this.editingTask.source) || {};
+        const type = String(src.type || "").trim().toLowerCase();
+        if (type === "repair" || type === "needs") return true;
+        if (type) return false;
+        // 名稱備援（type 未設定的舊資料相容）
+        const name = this.editingTask.source || "";
+        if (name.includes("工作") || (name.includes("資訊") && name.includes("進度"))) return false;
+        return true;
+      },
 
       filteredLogs() {
         let result = this.logs;
@@ -1234,7 +1244,18 @@ initTrendChart(data) {
         if (s.includes('✔') || s.includes('完成')) return 'bg-success bg-opacity-10 text-success border-success';
         return 'bg-secondary bg-opacity-10 text-secondary border-secondary';
       },
-      getModalHeaderColor() { const s = this.editingTask.source || ''; if (s.includes('需求')) return 'purple'; if (s.includes('資訊')) return 'success'; if (s.includes('報修')) return 'primary'; return 'dark'; },
+      getModalHeaderColor() {
+        const src = this.sources.find(s => s.name === this.editingTask.source) || {};
+        const type = String(src.type || "").trim().toLowerCase();
+        if (type === "needs") return "purple";
+        if (type === "repair") return "success";
+        if (type) return "dark";
+        // 名稱備援（type 未設定的舊資料相容）
+        const s = this.editingTask.source || "";
+        if (s.includes("需求")) return "purple";
+        if (s.includes("資訊")) return "success";
+        return "dark";
+      },
       getStatusClass(s) { return this.getBadgeClass(s); },
       startLoading(text) { this.loading = true; this.loadingText = text; },
       stopLoading() { this.loading = false; },
