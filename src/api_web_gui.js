@@ -85,11 +85,28 @@ function apiProvisionAndSetup(payload) {
       comparisonFolderIdOverride:  folderResult.folders.analytics,
     });
 
+    // 3b. 同步 cache 並自動建立預設資料來源
+    getConfig().set(PROPERTY_KEYS.SPREADSHEET_ID, provisionResult.ssId);
+
+    const defaultSources = [
+      { type: 'repair', name: 'IT Log - 資訊報修' },
+      { type: 'daily',  name: 'IT Log - 日常工作' },
+      { type: 'needs',  name: 'IT Log - 需求追蹤' },
+    ];
+    for (const src of defaultSources) {
+      try {
+        provisionSource(src.type, src.name);
+      } catch (e) {
+        Logger.log(`⚠️ 自動建立來源失敗 [${src.type}]: ${e.message}`);
+      }
+    }
+
     // 4. 回傳結構化結果
     return {
       success:      true,
       ssId:         provisionResult.ssId,
       ssName:       provisionResult.ssName,
+      ssUrl:        provisionResult.ssUrl,
       rootFolderId: folderResult.rootFolderId,
     };
   } catch (e) {

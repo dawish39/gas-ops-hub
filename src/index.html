@@ -532,11 +532,6 @@
               <input type="password" class="form-control" v-model="setupForm.lineToken" placeholder="若使用 LINE Bot 則填入">
             </div>
             <div class="col-12">
-              <label class="form-label fw-bold">LINE 允許使用者 ID <span class="text-muted fw-normal">（選填）</span></label>
-              <div class="form-text mb-2">LINE Bot 白名單，多個 User ID 以逗號分隔</div>
-              <input type="text" class="form-control font-monospace" v-model="setupForm.lineUsers" placeholder="Uxxxxxxxx,Uxxxxxxxx">
-            </div>
-            <div class="col-12">
               <label class="form-label fw-bold">Gemini API Key <span class="text-muted fw-normal">（選填）</span></label>
               <div class="form-text mb-2">用於 LINE Bot 自然語言處理功能</div>
               <input type="password" class="form-control" v-model="setupForm.geminiKey" placeholder="AIzaSy...">
@@ -754,6 +749,54 @@
     </div>
   </div>
 
+  <!-- Onboarding Modal -->
+  <div v-if="onboardingModal.show"
+       class="modal fade show d-block"
+       tabindex="-1"
+       style="background: rgba(0,0,0,0.5);">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow-lg">
+        <div class="modal-header bg-success text-white">
+          <h5 class="modal-title fw-bold">
+            <i class="bi bi-check-circle-fill me-2"></i>🎉 初始化完成！
+          </h5>
+        </div>
+        <div class="modal-body p-4">
+          <div class="mb-3 d-flex align-items-center justify-content-between p-3 bg-light rounded">
+            <div>
+              <i class="bi bi-file-earmark-spreadsheet text-success me-2"></i>
+              <strong>{{ onboardingModal.ssName }}</strong>
+            </div>
+            <a :href="onboardingModal.ssUrl" target="_blank" class="btn btn-sm btn-outline-success">
+              <i class="bi bi-box-arrow-up-right me-1"></i>開啟
+            </a>
+          </div>
+          <div class="mb-3 p-3 bg-light rounded">
+            <i class="bi bi-table text-success me-2"></i>
+            預設資料來源（報修 / 日常 / 需求）已自動建立
+          </div>
+          <div class="alert alert-warning mb-0">
+            <div class="fw-bold mb-2">
+              <i class="bi bi-list-check me-1"></i>接下來請完成：
+            </div>
+            <ol class="mb-0 ps-3">
+              <li class="mb-1">開啟 Config 試算表，填寫 Email 工作表的收件人</li>
+              <li>至 GAS 後台設定每日日報觸發器</li>
+            </ol>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <a :href="onboardingModal.ssUrl" target="_blank" class="btn btn-outline-success">
+            <i class="bi bi-file-earmark-spreadsheet me-1"></i>開啟 Config 試算表
+          </a>
+          <button type="button" class="btn btn-primary" @click="closeOnboarding()">
+            前往 Dashboard
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -786,6 +829,7 @@
         trendChartSource: '_ALL_', // 趨勢圖的資料來源篩選器
         debouncedFetchTrendData: null,
         reloadOnModalClose: false,
+        onboardingModal: { show: false, ssName: '', ssUrl: '' },
         sources: [],
         currentSourceIdx: 0,
         logs: [],
@@ -827,7 +871,7 @@
         editModalInstance: null,
         editingTask: { uuid: '', source: '', item: '', category: '', dept: '', status: '', progress: '', link: '' },
         isCreating: false,
-        setupForm: { configSsId: '', lineToken: '', lineUsers: '', geminiKey: '', rootFolderId: '' },
+        setupForm: { configSsId: '', lineToken: '', geminiKey: '', rootFolderId: '' },
         showAdvanced: false,
         projectStatus: { isConfigured: false, configSsId: '', hasLineToken: false, hasReportsFolder: false },
         provisionType: 'repair',
@@ -1292,6 +1336,12 @@ initTrendChart(data) {
             .getScriptURL();
         }
       },
+      closeOnboarding() {
+        this.onboardingModal.show = false;
+        google.script.run
+          .withSuccessHandler(url => window.top.location.replace(url))
+          .getScriptURL();
+      },
 
       openModal(task) {
         if (!task.uuid) { alert("UUID 失效"); return; }
@@ -1587,18 +1637,16 @@ initTrendChart(data) {
           .withSuccessHandler(res => {
             this.stopLoading();
             if (res && res.success === true) {
-              this.jobResult = '✅ 初始化完成\nConfig 試算表：' + res.ssName +
-                               '\n根目錄：' + res.rootFolderId;
+              this.onboardingModal.ssName = res.ssName;
+              this.onboardingModal.ssUrl  = res.ssUrl;
+              this.onboardingModal.show   = true;
             } else {
               const errMsg = res.error === 'ALREADY_INITIALIZED'
                 ? '系統已初始化，如需重設請至 GAS 後台刪除 MAIN_CONFIG_SPREADSHEET_ID'
                 : (res.error || '初始化失敗');
               this.jobResult = '❌ ' + errMsg;
+              new bootstrap.Modal(document.getElementById('resultModal')).show();
             }
-            if (res && res.success === true) {
-              this.reloadOnModalClose = true;
-            }
-            new bootstrap.Modal(document.getElementById('resultModal')).show();
           })
           .withFailureHandler(err => {
             this.stopLoading();
@@ -1608,7 +1656,6 @@ initTrendChart(data) {
           .apiProvisionAndSetup({
             rootFolderId: this.setupForm.rootFolderId,
             lineToken:    this.setupForm.lineToken,
-            lineUsers:    this.setupForm.lineUsers,
             geminiKey:    this.setupForm.geminiKey,
           });
       },

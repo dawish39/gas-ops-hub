@@ -64,6 +64,18 @@ class ConfigManager {
     this.cache[key] = value;
     return value;
   }
+
+  /**
+   * Sets a configuration value, writing to both ScriptProperties and cache.
+   * Use this instead of PropertiesService directly when the value must be
+   * readable within the same execution context.
+   * @param {string} key The property key defined in PROPERTY_KEYS.
+   * @param {string} value The value to store.
+   */
+  set(key, value) {
+    this.scriptProperties.setProperty(key, value);
+    this.cache[key] = value;
+  }
 }
 
 // Export a singleton instance for global use
