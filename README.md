@@ -309,26 +309,73 @@ clasp push
 
 ### 7.1. 設定方式
 
-1.  打開 Google Apps Script 專案。
-2.  點擊左側的 "專案設定" (Project Settings) 圖示 (⚙️)。
-3.  在 "指令碼屬性 (Script Properties)" 區塊，點擊 "新增指令碼屬性"。
-4.  逐一加入下表所需的屬性名稱與對應的值。
+絕大部分的 ScriptProperties 由系統在 **onboarding 初始化流程**中自動建立，
+無需手動到 GAS 後台填寫。
+
+唯一需要在 setup 頁面主動填寫的項目為：
+- `LINE_CHANNEL_ACCESS_TOKEN`：若使用 LINE Bot 功能則填入
+- `GEMINI_API_KEY`：若使用 Gemini 自然語言處理功能則填入（選填）
+
+若需要手動檢視或修改 ScriptProperties，請至 GAS 後台 >「專案設定」>「指令碼屬性」。
 
 ### 7.2. 核心屬性列表
 
-| 屬性名稱 | 用途 | 範例值 / 如何取得 |
+| 屬性名稱 | 用途 | 寫入時機 |
 | :--- | :--- | :--- |
-| `GEMINI_API_KEY` | (選用) Google AI Gemini API 金鑰，用於自然語言處理。若不使用 Gemini 分析功能則可留空。 | `AIzaSy...` (從 Google AI Studio 取得) |
-| `MAIN_CONFIG_SPREADSHEET_ID` | 主要設定檔 Google Sheet 的 ID。 | `1CjNALBfP_...` (從 Sheet 網址取得) |
-| `LINE_ALLOWED_USERS` | 允許使用此 LINE Bot 的使用者 User ID，以逗號分隔。 | `U123abc...,U456def...` |
-| `LINE_CHANNEL_ACCESS_TOKEN` | LINE Messaging API 的 Channel Access Token。 | 從 [LINE Developer Console](https://developers.line.biz/) 取得。 |
-| `WEB_APP_URL` | GAS 專案部署為 Web App 後的 URL。 | 從 "部署" > "管理部署作業" 取得。 |
-| `REPORTS_FOLDER_ID` | (選用) 存放自動產生報表的 Google Drive 資料夾 ID。 | `137ScpX...` (從 Drive 資料夾網址取得) |
-| `REPORT_TEMPLATE_ID` | (選用) 每日日報所使用的 Google Doc 範本 ID。 | `153ZHVr...` (從 Doc 網址取得) |
-| `MAIL_SENDER_NAME`| (選用) 報表寄送時的寄件人顯示名稱。 | `IT 服務中心` |
-| `MAIL_TO`| (選用) 報表主要收件人 Email。 | `it-team@example.com` |
-| `MAIL_CC`| (選用) 報表副本收件人 Email。 | `manager@example.com` |
-| `MAIL_BCC`| (選用) 報表密件副本收件人 Email。 | `archive@example.com` |
+| `MAIN_CONFIG_SPREADSHEET_ID` | Config 試算表 ID | 系統初始化時自動寫入 |
+| `REPORTS_FOLDER_ID` | 2_Reports 資料夾 ID | 系統初始化時自動寫入 |
+| `NEEDS_FOLDER_ID` | 3_Analytics 資料夾 ID | 系統初始化時自動寫入 |
+| `COMPARISON_FOLDER_ID` | 3_Analytics 資料夾 ID（與 NEEDS_FOLDER_ID 目前指向同一資料夾） | 系統初始化時自動寫入 |
+| `DATA_SOURCES_FOLDER_ID` | 1_DataSources 資料夾 ID | 系統初始化時自動寫入 |
+| `WEB_APP_URL` | 部署後的 Web App URL | 首次存取時自動寫入 |
+| `REPORT_TEMPLATE_ID` | 每日日報 Google Doc 範本 ID | 系統初始化時自動建立並寫入 |
+| `LINE_CHANNEL_ACCESS_TOKEN` | LINE Bot Channel Access Token | setup 頁面填寫後寫入 |
+| `GEMINI_API_KEY` | Gemini AI API 金鑰（選填） | setup 頁面填寫後寫入 |
+| `LINE_ALLOWED_USERS` | LINE Bot 白名單 User ID，逗號分隔。對 Bot 傳訊後從 GAS 執行紀錄取得 User ID，再手動至 GAS 後台「指令碼屬性」填入。後續版本將提供 UI 管理介面 | 手動寫入 |
+
+> **注意：** Email 相關設定（收件人、副本、寄件者名稱）不儲存於 ScriptProperties，
+> 請直接在 Config 試算表的 **Email** 工作表填寫。
+
+### 7.3. 安全性設計
+
+#### URL 即憑證
+gas-ops-hub 部署為 GAS Web App 後，任何擁有 Web App URL 的人都可以存取系統介面。
+這是 GAS 平台的架構限制，系統本身沒有帳號登入機制。
+
+**建議做法：**
+- 將 Web App URL 視為機敏資訊，僅分享給需要使用的 IT 人員
+- 不要將 URL 張貼在公開頻道或文件中
+
+#### Setup Guard
+`apiProvisionAndSetup()` 與 `apiSetupProject()` 兩個初始化函式內建保護機制：
+系統啟動時會檢查 `MAIN_CONFIG_SPREADSHEET_ID` 是否已存在，
+若已存在則直接拒絕執行，防止誤操作或惡意重置覆蓋現有設定。
+
+#### 金鑰傳輸安全
+`LINE_CHANNEL_ACCESS_TOKEN` 與 `GEMINI_API_KEY` 透過 `google.script.run` 傳輸，
+全程走 HTTPS，無中間人攻擊風險。
+金鑰寫入 ScriptProperties 後，前端介面無法讀回，不會外洩。
+
+### 7.4. 危險操作
+
+#### ⚠️ 重設系統
+
+若需要重設系統並重新初始化，請依序執行以下步驟：
+
+1. 前往 [Google Apps Script 後台](https://script.google.com)，開啟本專案
+2. 點擊左側「專案設定」（⚙️）
+3. 在「指令碼屬性」區塊找到 `MAIN_CONFIG_SPREADSHEET_ID`，將其刪除
+4. 重新開啟 Web App URL，若頁面未更新請強制重新整理（Windows: `Ctrl+F5` / Mac: `Cmd+Shift+R`），系統會回到初始化設定畫面
+
+**重設前請注意：**
+- 此步驟僅刪除 `MAIN_CONFIG_SPREADSHEET_ID` 以解除初始化鎖定，
+  其餘設定（如 LINE Token、Gemini Key）會保留，重新初始化後可直接沿用。
+  若需要完整清除所有設定，請至「指令碼屬性」手動逐一刪除所有 key
+- 刪除 `MAIN_CONFIG_SPREADSHEET_ID` 只會解除系統與 Config 試算表的綁定，
+  **不會刪除** Google Drive 上的任何資料夾或試算表
+- 若要完整清除，請手動至 Google Drive 刪除 `gas-ops-hub-project` 資料夾
+- 重新初始化後會建立全新的 Config 試算表與資料夾結構，
+  舊的資料來源需重新在 Config 試算表登記
 
 ---
 
