@@ -531,6 +531,16 @@
               <label class="form-label fw-bold">LINE Channel Access Token <span class="text-muted fw-normal">（選填）</span></label>
               <input type="password" class="form-control" v-model="setupForm.lineToken" placeholder="若使用 LINE Bot 則填入">
             </div>
+            <div class="col-12">
+              <label class="form-label fw-bold">LINE 允許使用者 ID <span class="text-muted fw-normal">（選填）</span></label>
+              <div class="form-text mb-2">LINE Bot 白名單，多個 User ID 以逗號分隔</div>
+              <input type="text" class="form-control font-monospace" v-model="setupForm.lineUsers" placeholder="Uxxxxxxxx,Uxxxxxxxx">
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-bold">Gemini API Key <span class="text-muted fw-normal">（選填）</span></label>
+              <div class="form-text mb-2">用於 LINE Bot 自然語言處理功能</div>
+              <input type="password" class="form-control" v-model="setupForm.geminiKey" placeholder="AIzaSy...">
+            </div>
             <div class="col-12 mt-2">
               <button class="btn btn-primary" @click="autoSetup()">
                 <i class="bi bi-rocket-takeoff me-1"></i>開始初始化
@@ -817,7 +827,7 @@
         editModalInstance: null,
         editingTask: { uuid: '', source: '', item: '', category: '', dept: '', status: '', progress: '', link: '' },
         isCreating: false,
-        setupForm: { configSsId: '', lineToken: '', rootFolderId: '' },
+        setupForm: { configSsId: '', lineToken: '', lineUsers: '', geminiKey: '', rootFolderId: '' },
         showAdvanced: false,
         projectStatus: { isConfigured: false, configSsId: '', hasLineToken: false, hasReportsFolder: false },
         provisionType: 'repair',
@@ -1597,7 +1607,9 @@ initTrendChart(data) {
           })
           .apiProvisionAndSetup({
             rootFolderId: this.setupForm.rootFolderId,
-            lineToken: this.setupForm.lineToken
+            lineToken:    this.setupForm.lineToken,
+            lineUsers:    this.setupForm.lineUsers,
+            geminiKey:    this.setupForm.geminiKey,
           });
       },
 

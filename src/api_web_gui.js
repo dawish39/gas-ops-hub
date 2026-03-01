@@ -76,6 +76,8 @@ function apiProvisionAndSetup(payload) {
     // 3. 寫入 Script Properties
     initializeProject(provisionResult.ssId, {
       lineToken:                   (payload || {}).lineToken,
+      lineUsers:                   (payload || {}).lineUsers,
+      geminiKey:                   (payload || {}).geminiKey,
       reportTemplateId:            provisionResult.templateId,
       reportsFolderIdOverride:     folderResult.folders.reports,
       dataSourcesFolderIdOverride: folderResult.folders.dataSources,

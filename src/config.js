@@ -26,7 +26,8 @@ const PROPERTY_KEYS = {
   ANALYSIS_SHEET_ID: 'ANALYSIS_SHEET_ID',   
   COMPARISON_FOLDER_ID: 'COMPARISON_FOLDER_ID', 
 
-  // LINE_CHANNEL_ACCESS_TOKEN and other sensitive keys should be added here
+  GEMINI_API_KEY: 'GEMINI_API_KEY',
+  // LINE_CHANNEL_ACCESS_TOKEN is stored directly as a string key (not in PROPERTY_KEYS)
 };
 
 /**
@@ -143,6 +144,7 @@ function _initFolders(rootFolderId) {
  * @param {string} [options.lineToken]
  * @param {string} [options.lineUsers]
  * @param {string} [options.reportTemplateId]
+ * @param {string} [options.geminiKey] - Gemini API 金鑰（選填）
  * @param {string} [options.rootFolderId] - 傳入此參數以啟用資料夾初始化。
  *   有效 Drive 資料夾 ID → 使用現有資料夾；空字串 → 自動建立新資料夾。
  * @param {string} [options.reportsFolderIdOverride]    - 直接指定 REPORTS_FOLDER_ID（不呼叫 _initFolders）
@@ -176,6 +178,7 @@ function initializeProject(configSsId, options = {}) {
   if (options.lineToken)        properties['LINE_CHANNEL_ACCESS_TOKEN']      = options.lineToken;
   if (options.lineUsers)        properties['LINE_ALLOWED_USERS']              = options.lineUsers;
   if (options.reportTemplateId) properties[PROPERTY_KEYS.REPORT_TEMPLATE_ID] = options.reportTemplateId;
+  if (options.geminiKey)        properties[PROPERTY_KEYS.GEMINI_API_KEY]     = options.geminiKey;
 
   // ── 資料夾初始化 ──────────────────────────────────────────────────────────
   let folderResult = null;
