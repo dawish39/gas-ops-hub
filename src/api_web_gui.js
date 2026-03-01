@@ -39,6 +39,9 @@ function apiGetProjectStatus() {
  */
 // eslint-disable-next-line no-unused-vars
 function apiSetupProject(payload) {
+  const alreadyInit = PropertiesService.getScriptProperties()
+                        .getProperty(PROPERTY_KEYS.SPREADSHEET_ID);
+  if (alreadyInit) return '❌ 系統已初始化，如需重設請至 GAS 後台刪除 MAIN_CONFIG_SPREADSHEET_ID';
   const { configSsId, ...options } = payload || {};
   if (!configSsId || !String(configSsId).trim()) return '❌ Config Spreadsheet ID 為必填';
   return initializeProject(String(configSsId).trim(), options);
@@ -57,6 +60,10 @@ function apiSetupProject(payload) {
 // eslint-disable-next-line no-unused-vars
 function apiProvisionAndSetup(payload) {
   try {
+    const alreadyInit = PropertiesService.getScriptProperties()
+                          .getProperty(PROPERTY_KEYS.SPREADSHEET_ID);
+    if (alreadyInit) return { success: false, error: 'ALREADY_INITIALIZED' };
+
     // 1. 建立資料夾結構
     const folderResult = _initFolders((payload || {}).rootFolderId || '');
 

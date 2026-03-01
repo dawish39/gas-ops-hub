@@ -1580,7 +1580,10 @@ initTrendChart(data) {
               this.jobResult = '✅ 初始化完成\nConfig 試算表：' + res.ssName +
                                '\n根目錄：' + res.rootFolderId;
             } else {
-              this.jobResult = '❌ ' + (res.error || '初始化失敗');
+              const errMsg = res.error === 'ALREADY_INITIALIZED'
+                ? '系統已初始化，如需重設請至 GAS 後台刪除 MAIN_CONFIG_SPREADSHEET_ID'
+                : (res.error || '初始化失敗');
+              this.jobResult = '❌ ' + errMsg;
             }
             if (res && res.success === true) {
               this.reloadOnModalClose = true;
