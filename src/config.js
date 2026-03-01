@@ -187,3 +187,119 @@ function initializeProject(configSsId, options = {}) {
   }
   return ['=== initializeProject 完成 ===', ...log, '', '請重新整理 Web GUI 以套用設定。'].join('\n');
 }
+
+/**
+ * 自動建立符合 SCHEMA.md 定義的 Config 試算表，並寫入預設資料。
+ *
+ * 在 GAS 編輯器執行：
+ *   provisionConfigSs()
+ *   provisionConfigSs({ folderId: 'FOLDER_ID' })
+ *   provisionConfigSs({ folderId: 'FOLDER_ID', ssName: 'my-config' })
+ *
+ * @param {Object}  [options]
+ * @param {string}  [options.folderId]              - 要在哪個資料夾建立試算表（選填，留空則建在根目錄）
+ * @param {string}  [options.ssName='gas-ops-hub-config'] - 試算表名稱
+ * @returns {{ success: true, ssId: string, ssName: string, ssUrl: string }
+ *         | { success: false, error: string }}
+ */
+// eslint-disable-next-line no-unused-vars
+function provisionConfigSs(options = {}) {
+  try {
+    const ssName = options.ssName || 'gas-ops-hub-config';
+
+    // 1. 建立試算表
+    const ss = SpreadsheetApp.create(ssName);
+
+    // 2. 將預設 Sheet1 重新命名為 'Config'
+    ss.getSheets()[0].setName('Config');
+
+    // 3. 新增其餘工作表
+    const statusDefSheet      = ss.insertSheet('StatusDef');
+    const emailSheet          = ss.insertSheet('Email');
+    const departmentSheet     = ss.insertSheet('Department');
+    const categoryCodeMapSheet = ss.insertSheet('CategoryCodeMap');
+    const repairCategorySheet = ss.insertSheet('RepairCategory');
+    const needsCategorySheet  = ss.insertSheet('NeedsCategory');
+
+    // 4. 若傳入 folderId，移動試算表
+    if (options.folderId) {
+      DriveApp.getFileById(ss.getId()).moveTo(DriveApp.getFolderById(options.folderId));
+    }
+
+    // 5. 寫入各工作表資料
+
+    // Config（只建 header）
+    const configSheet = ss.getSheetByName('Config');
+    configSheet.appendRow(['來源名稱', '檔案 ID', '工作表名稱', '啟用', '輸出欄位', 'type']);
+
+    // StatusDef（header + 6 筆預設資料）
+    statusDefSheet.getRange(1, 1, 7, 2).setValues([
+      ['狀態', '定義'],
+      ['○ 待處理', '新進案件，尚未開始'],
+      ['➤ 處理中', '正在進行'],
+      ['? 待確認', '已完成，等回報或驗收'],
+      ['✔ 完成',   '結案'],
+      ['‖ 暫停',   '卡在外部因素，暫時不動'],
+      ['✖ 取消',   '需求或案件作廢'],
+    ]);
+
+    // Email（只建 header）
+    emailSheet.appendRow(['recipient', 'cc', 'senderName']);
+
+    // Department（header + 6 筆預設資料）
+    departmentSheet.getRange(1, 1, 7, 2).setValues([
+      ['部', '組'],
+      ['資訊部', '資訊部'],
+      ['客務部', '客務組'],
+      ['房務部', '房務組'],
+      ['業務部', '業務部'],
+      ['業務部', '客服組'],
+      ['財務部', '財務部'],
+    ]);
+
+    // CategoryCodeMap（header + 8 筆預設資料）
+    categoryCodeMapSheet.getRange(1, 1, 9, 5).setValues([
+      ['代碼', '主項目名稱', '啟用', '說明', '類型'],
+      [1, '電腦設備', 'Y', '', 'repair'],
+      [2, '網路設備', 'Y', '', 'repair'],
+      [3, '軟體系統', 'Y', '', 'repair'],
+      [4, '帳號權限', 'Y', '', 'repair'],
+      [5, '系統開發', 'Y', '', 'needs'],
+      [6, '報表需求', 'Y', '', 'needs'],
+      [7, '流程優化', 'Y', '', 'needs'],
+      [8, '其他',     'N', '', 'needs'],
+    ]);
+
+    // RepairCategory（A 欄純文字 → header + 5 筆資料）
+    repairCategorySheet.getRange('A:A').setNumberFormat('@');
+    repairCategorySheet.getRange(1, 1, 6, 6).setValues([
+      ['ID', '子項目', '主項目名稱', '啟用', '登錄時間', '備註'],
+      ['101', '無法開機', '電腦設備', 'Y', '2026-01-01', ''],
+      ['102', '螢幕異常', '電腦設備', 'Y', '2026-01-01', ''],
+      ['201', '無法連線', '網路設備', 'Y', '2026-01-01', ''],
+      ['301', '系統錯誤', '軟體系統', 'Y', '2026-01-01', ''],
+      ['401', '帳號鎖定', '帳號權限', 'Y', '2026-01-01', ''],
+    ]);
+
+    // NeedsCategory（A 欄純文字 → header + 4 筆資料）
+    needsCategorySheet.getRange('A:A').setNumberFormat('@');
+    needsCategorySheet.getRange(1, 1, 5, 6).setValues([
+      ['ID', '子項目', '主項目名稱', '啟用', '登錄時間', '備註'],
+      ['501', '新功能開發', '系統開發', 'Y', '2026-01-01', ''],
+      ['601', '月報表',     '報表需求', 'Y', '2026-01-01', ''],
+      ['701', '流程自動化', '流程優化', 'Y', '2026-01-01', ''],
+      ['702', 'SOP 文件化', '流程優化', 'Y', '2026-01-01', ''],
+    ]);
+
+    // 6. 回傳結構化結果
+    return {
+      success: true,
+      ssId:    ss.getId(),
+      ssName:  ss.getName(),
+      ssUrl:   ss.getUrl(),
+    };
+
+  } catch (e) {
+    return { success: false, error: e.message };
+  }
+}
