@@ -524,12 +524,11 @@
           <div class="row g-3">
             <div class="col-12">
               <label class="form-label fw-bold">專案根目錄 ID <span class="text-muted fw-normal">（選填）</span></label>
-              <div class="form-text mb-2">留空則自動在 Drive 根目錄建立 gas-ops-hub-project</div>
-              <input type="text" class="form-control font-monospace" v-model="setupForm.rootFolderId" placeholder="貼上 Google Drive 資料夾 ID">
+              <input type="text" class="form-control font-monospace" v-model="setupForm.rootFolderId" placeholder="貼上 Google Drive 資料夾 ID/留空則自動在 Drive 根目錄建立 gas-ops-hub-project">
             </div>
             <div class="col-12">
               <label class="form-label fw-bold">LINE Channel Access Token <span class="text-muted fw-normal">（選填）</span></label>
-              <input type="password" class="form-control" v-model="setupForm.lineToken" placeholder="若使用 LINE Bot 則填入">
+              <input type="password" class="form-control" v-model="setupForm.lineToken" placeholder="若欲使用 LINE Bot 請填入">
             </div>
             <div class="col-12">
               <label class="form-label fw-bold">Gemini API Key <span class="text-muted fw-normal">（選填）</span></label>
