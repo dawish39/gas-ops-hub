@@ -85,40 +85,41 @@ sequenceDiagram
 ```mermaid
 graph TD
     subgraph "User Interfaces"
-        A[IT Staff (LINE Bot)]
-        B[IT Staff via Browser]
+        A["IT Staff (LINE Bot)"]
+        B["IT Staff via Browser"]
     end
 
     subgraph "GAS Web App (Backend Services)"
-        C[api_line_bot.js]
-        D[api_web_gui.js]
-        E[main.js / dao.js]
-        F[triggers.js]
-        G[report_v2.js / analytics.js]
+        C["api_line_bot.js"]
+        D["api_web_gui.js"]
+        E["main.js / dao.js"]
+        F["triggers.js"]
+        G["report_v2.js / analytics.js"]
     end
 
     subgraph "Data Storage"
-        H[Google Sheets]
+        H["Google Sheets"]
     end
 
     subgraph "External Services"
-        I[LINE Messaging API]
-        J[Gmail API]
-        K[Google Charts]
+        I["LINE Messaging API"]
+        J["Gmail API"]
+        K["Google Charts"]
     end
 
-    A -- "Sends message" --> I -- "Webhook" --> C
-    B -- "HTTPS Request" --> D
+    A -- "Sends messages" --> I
+    I -- "Webhook" --> C
+    B -- "HTTPS requests" --> D
 
-    C -- "Writes Log" --> E
-    D -- "Reads/Writes Log" --> E
-    D -- "Generates Reports" --> G
+    C -- "Writes logs" --> E
+    D -- "Reads/Writes logs" --> E
+    D -- "Generates reports" --> G
 
-    E -- "CRUD Operations" --> H
+    E -- "Performs CRUD operations" --> H
 
-    F -- "Time-based trigger" --> J
-    G -- "Creates Chart" --> K
-    C -- "Replies" --> I
+    F -- "Sends automated emails" --> J
+    G -- "Generates charts" --> K
+    C -- "Sends replies" --> I
 ```
 
 系統主要由兩個入口點驅動：
