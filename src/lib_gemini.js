@@ -50,7 +50,20 @@ function callGeminiParser(userMessage) {
       "parts": [
         { "text": systemPrompt + "\n\nInput: " + userMessage }
       ]
-    }]
+    }],
+    "generationConfig": {
+      "responseMimeType": "application/json",
+      "responseSchema": {
+        "type": "object",
+        "properties": {
+          "item":     { "type": "string" },
+          "progress": { "type": "string" },
+          "status":   { "type": "string" }
+        },
+        "required": ["item", "progress", "status"]
+      },
+      "thinkingConfig": { "thinkingBudget": 0 }
+    }
   };
 
   // 4. 發送請求 (Transmission)
@@ -72,11 +85,10 @@ function callGeminiParser(userMessage) {
     }
 
     // 5. 解析回應 (Unpacking)
-    let rawText = responseBody.candidates[0].content.parts[0].text;
-    
-    // 清洗 Markdown 標記 (Sanitization)
-    // Gemini 有時會雞婆地加上 \`\`\`json ... \`\`\`，我們要把它濾掉
-    rawText = rawText.replace(/```json/g, "").replace(/```/g, "").trim();
+    const parts = responseBody.candidates[0].content.parts;
+    const answerPart = parts.find(p => !p.thought && p.text);
+    if (!answerPart) throw new Error("Gemini 未回傳有效內容");
+    let rawText = answerPart.text;
 
     const parsedJson = JSON.parse(rawText);
     
