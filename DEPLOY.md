@@ -1,4 +1,3 @@
-```markdown
 # 部署指南
 
 部署 gas-ops-hub 不需要準備伺服器，只需透過 Google Apps Script (GAS) 搭配 `clasp` 工具即可完成。
